@@ -134,6 +134,7 @@ function fillPanel(name) {
     : 'Clima mixto: la IA alterna seco y agua según lo que pronostica para las próximas 24 h.';
 }
 function selectCity(name, { open = false } = {}) {
+  if (open && window.closeDrawer) closeDrawer();
   S.city = name; $$('.pills button').forEach(b => b.classList.toggle('on', b.dataset.c === name));
   const c = S.cities.find(x => x.ciudad === name);
   if (S.mapReady) { if (open) { fillPanel(name); $('#panel').classList.add('open'); }
@@ -297,7 +298,7 @@ $('#heat')._on = once(() => { S.brainShown = true; renderBrain(); });
     countTo($('#h-pct'), t.agua_ahorrada_pct, { dur: 2200 }); countTo($('#h-l'), b.agua_l - t.agua_l, { dur: 2600 }); }, 500);
   glide(); loadScen(); addEventListener('resize', glide); dispatchEvent(new Event('scroll'));
   S.cfg = cfg; S.user = user; initDrawer(user, cfg);
-  const goHome = setInterval(() => { if (S.mapReady) { clearInterval(goHome); selectCity(S.city, { open: true }); } }, 400); setTimeout(() => clearInterval(goHome), 15000);
+  const goHome = setInterval(() => { if (S.mapReady) { clearInterval(goHome); selectCity(S.city, { open: false }); } }, 400); setTimeout(() => clearInterval(goHome), 15000);
 })().catch(e => { console.error(e); $('#ld-n').textContent = '!'; $('.ld-inner .mono').textContent = 'no se pudo conectar con la API · uvicorn api:app --port 8000'; });
 
 
@@ -321,7 +322,7 @@ function initDrawer(me, cfg) {
     try { await call('/settings', 'PUT', c); } catch (e) { $('#d-msg').textContent = 'No se pudo guardar'; return; }
     S.sum = await get(`/summary?lam=${S.lam}&margin=${S.margin}`);
     const t = S.sum.total.find(IA), b = S.sum.total[0]; countTo($('#h-pct'), t.agua_ahorrada_pct, { dur: 900 }); countTo($('#h-l'), b.agua_l - t.agua_l, { dur: 900 });
-    if (c.ciudad !== prevCity) selectCity(c.ciudad, { open: true }); else { if ($('#panel').classList.contains('open')) fillPanel(S.city); loadDay(); }
+    if (c.ciudad !== prevCity) selectCity(c.ciudad, { open: false }); else { if ($('#panel').classList.contains('open')) fillPanel(S.city); loadDay(); }
     loadScen(); kpis(); $('#d-msg').textContent = ''; $('#d-msg').className = 'dnote';
   }
   let t, prev = cfg.ciudad; const later = () => { clearTimeout(t); const p = prev; prev = F.ciudad.value; t = setTimeout(() => apply(p), 400); };
@@ -331,7 +332,8 @@ function initDrawer(me, cfg) {
     try { const r = await get('/report/optimize'); m.textContent = r.recomendacion.mensaje; m.className = 'dnote' + (r.recomendacion.accion === 'usar_ia' ? '' : ' no');
       if (r.recomendacion.accion === 'usar_ia') { F.lam.value = r.recomendacion.lam; later(); } } catch (e) { m.textContent = e.message; }
   });
-  const setOpen = on => { d.classList.toggle('open', on); document.body.classList.toggle('dr-open', on); };
+  const setOpen = on => { d.classList.toggle('open', on); document.body.classList.toggle('dr-open', on); if (on) $('#panel').classList.remove('open'); };
+  window.closeDrawer = () => setOpen(false);
   $('#pbtn').addEventListener('click', e => { e.preventDefault(); setOpen(!d.classList.contains('open')); });
   $('#d-x').addEventListener('click', () => setOpen(false));
   $('#d-out').addEventListener('click', () => toLogin());
