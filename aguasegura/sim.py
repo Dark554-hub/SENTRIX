@@ -18,7 +18,13 @@ CITIES = {
     'Querétaro': (20.5888, -100.3899), 'Monterrey': (25.6866, -100.3161), 'Ciudad de México': (19.4326, -99.1332),
     'Guadalajara': (20.6597, -103.3496), 'Mérida': (20.9674, -89.5926), 'Chihuahua': (28.6353, -106.0889),
     'Mexicali': (32.6245, -115.4523),
+    # Polos de centros de datos de IA en EE. UU. (el modelo NO se entrenó con estas ciudades)
+    'Silicon Valley': (37.3541, -121.9552), 'Ashburn': (39.0438, -77.4874), 'Phoenix': (33.4484, -112.0740),
+    'Dallas': (32.7767, -96.7970), 'Prineville': (44.2999, -120.8345), 'Council Bluffs': (41.2619, -95.8608),
 }
+PAIS_US = {'Silicon Valley', 'Ashburn', 'Phoenix', 'Dallas', 'Prineville', 'Council Bluffs'}
+TZ = {'Silicon Valley': 'America/Los_Angeles', 'Ashburn': 'America/New_York', 'Phoenix': 'America/Phoenix',
+      'Dallas': 'America/Chicago', 'Prineville': 'America/Los_Angeles', 'Council Bluffs': 'America/Chicago'}
 START, END = '2022-01-01', '2026-09-30'
 TRAIN_END, VAL_END = '2024-12-31 23:00', '2025-12-31 23:00'   # test = 2026 (clima real, nunca visto)
 INLET_MAX = 27.0   # °C, límite superior recomendado de entrada (ASHRAE A1 recomendado)
@@ -30,7 +36,7 @@ def fetch_weather(city, force=False):
         return pd.read_csv(f, parse_dates=['time'])
     lat, lon = CITIES[city]
     url = ('https://archive-api.open-meteo.com/v1/archive?latitude=%s&longitude=%s&start_date=%s&end_date=%s'
-           '&hourly=temperature_2m,relative_humidity_2m&timezone=America%%2FMexico_City' % (lat, lon, START, END))
+           '&hourly=temperature_2m,relative_humidity_2m&timezone=%s' % (lat, lon, START, END, TZ.get(city, 'America/Mexico_City').replace('/', '%2F')))
     with urllib.request.urlopen(url, timeout=120) as r:
         j = json.load(r)['hourly']
     w = pd.DataFrame({'time': pd.to_datetime(j['time']), 'T': j['temperature_2m'], 'RH': j['relative_humidity_2m']})

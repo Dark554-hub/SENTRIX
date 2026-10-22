@@ -17,7 +17,7 @@ async function initMap() {
   try { cities = (await (await fetch('/cities')).json()).cities; } catch (e) { cities = []; }
   if (!window.maplibregl) return;
   map = new maplibregl.Map({ container: 'map', style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-    center: [-101.5, 23.6], zoom: 4.3, attributionControl: false, interactive: true, dragRotate: false });
+    center: [-100, 31], zoom: 3.4, attributionControl: false, interactive: true, dragRotate: false });
   map.scrollZoom.disable();
   cities.forEach(c => {
     const e = el('div', 'mk');

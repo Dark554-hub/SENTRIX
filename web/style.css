@@ -228,3 +228,5 @@ button.cta-cuenta{border:0;font-family:inherit;cursor:pointer}
 body.dr-open .panel{right:calc(min(380px,100vw - 24px) + clamp(12px,2vw,28px) + 16px)}
 @media(max-width:1180px){body.dr-open .panel{display:none}}
 @media(max-width:700px){.drawer{top:70px}}
+
+#p-note[data-us]::after{content:'Ciudad de EE. UU.: el modelo no se entrenó con ella; es una prueba de transferencia.';display:block;margin-top:10px;color:var(--warn)}

@@ -17,12 +17,12 @@ Sistema de apoyo a la decisión para **reducir el agua de enfriamiento de centro
 | `train.py` | Entrenamiento y evaluación de Transformer y LSTM contra persistencia |
 | `AguaSegura_AI.ipynb` | Notebook con el análisis completo |
 | `models/` | Modelos entrenados y métricas |
-| `data/` | Clima real y simulaciones por ciudad (7 ciudades) |
+| `data/` | Clima real y simulaciones por ciudad (13 ciudades) |
 | `tests/` | Pruebas unitarias |
 
 ## Cómo funciona
 
-1. **Datos:** clima horario real de 7 ciudades (Chihuahua, Ciudad de México, Guadalajara, Mexicali, Monterrey, Mérida, Querétaro).
+1. **Datos:** clima horario real de 13 ciudades: 7 de México (Chihuahua, Ciudad de México, Guadalajara, Mexicali, Monterrey, Mérida, Querétaro) y 6 polos de centros de datos de IA en EE. UU. (Silicon Valley, Ashburn, Phoenix, Dallas, Prineville y Council Bluffs). El modelo se entrenó solo con las ciudades de México; en las de EE. UU. se usa tal cual, como prueba de transferencia.
 2. **Simulador:** carga de IA, estado de la torre y consumos de agua/energía, calibrados con el kit CIFOX (PUE evaporativo ≈ 1.24, PUE aire ≈ 1.37, WUE evaporativo ≈ 0.9 L/kWh IT).
 3. **Pronóstico:** Transformer con intervalos P10/P50/P90, entrenado con histórico y evaluado en 2026 (clima nunca visto) contra LSTM y persistencia.
 4. **Políticas comparadas:** siempre evaporativo (status quo), reactiva, pronóstico ingenuo (ayer), **IA (Transformer)** y oráculo (techo teórico).

@@ -116,18 +116,19 @@ function initMap() {
   const st = document.createElement('style'); st.textContent = '@keyframes ping{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.1);opacity:0}}'; document.head.appendChild(st);
   S.mapReady = true;
   $('#mapa')._on = once(() => {
-    m.flyTo({ center: [-101.2, 23.4], zoom: 4.7, pitch: 40, bearing: -10, duration: 3400, essential: true });
+    m.flyTo({ center: [-100, 31], zoom: 3.6, pitch: 30, bearing: -10, duration: 3400, essential: true });
     setTimeout(() => Object.values(S.markers).forEach(mk => { mk.getElement().firstChild.style.transform = 'scale(1)'; mk.getElement().querySelector('span').style.opacity = 1; }), 900);
   });
   io.observe($('#mapa'));
 }
 function fillPanel(name) {
   const c = S.cities.find(x => x.ciudad === name), r = S.sum.por_ciudad.find(x => x.ciudad === name && IA(x));
-  $('#p-i').textContent = `0${S.cities.indexOf(c) + 1} / 0${S.cities.length}`;
+  $('#p-i').textContent = `${String(S.cities.indexOf(c) + 1).padStart(2, '0')} / ${S.cities.length}`;
   const t = $('#p-city'); t.style.opacity = 0; t.style.transform = 'translateY(14px)';
   setTimeout(() => { t.textContent = name; t.style.transition = 'all .7s cubic-bezier(.22,.9,.2,1)'; t.style.opacity = 1; t.style.transform = 'none'; }, 180);
   countTo($('#p-pct'), r.agua_ahorrada_pct, { suf: ' %' }); countTo($('#p-l'), r.agua_ahorrada_l / 1000, { dec: 0, suf: ' kL' });
   countTo($('#p-e'), r.energia_extra_pct, { dec: 1, pre: '+', suf: ' %' }); countTo($('#p-seco'), c.pct_horas_seco_factible, { suf: ' %' });
+  if (c.pais === 'EE. UU.') $('#p-note').dataset.us = '1'; else delete $('#p-note').dataset.us;
   $('#b-seco').style.width = c.pct_horas_seco_factible + '%'; $('#b-evap').style.width = c.pct_horas_evap_factible + '%';
   $('#p-note').textContent = c.pct_horas_evap_factible < 50 ? 'Aquí ni el modo evaporativo mantiene 27 °C la mayor parte del año: haría falta enfriamiento líquido, que este modelo no cubre.'
     : c.pct_horas_seco_factible >= 80 ? 'Clima fresco: el modo seco aguanta casi todo el año; la IA solo necesita agua en las horas más calientes.'
@@ -141,7 +142,7 @@ function selectCity(name, { open = false } = {}) {
     S.map.flyTo({ center: [c.lon - (open ? .9 : 0), c.lat], zoom: open ? 6.2 : 4.7, pitch: open ? 55 : 40, bearing: open ? 14 : -10, duration: 2400, essential: true }); }
   loadCityData();
 }
-$('#p-x').addEventListener('click', () => { $('#panel').classList.remove('open'); S.map.flyTo({ center: [-101.2, 23.4], zoom: 4.7, pitch: 40, bearing: -10, duration: 2200 }); });
+$('#p-x').addEventListener('click', () => { $('#panel').classList.remove('open'); S.map.flyTo({ center: [-100, 31], zoom: 3.6, pitch: 30, bearing: -10, duration: 2200 }); });
 
 /* ------------------------------------------------------------------ un día */
 const CH = { x0: 60, w: 1120, a: [30, 250], b: [310, 480], s: [508, 538] };

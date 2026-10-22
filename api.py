@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-from aguasegura.sim import CITIES, INLET_MAX, load_city
+from aguasegura.sim import CITIES, INLET_MAX, PAIS_US, load_city
 from aguasegura.nn import TransformerForecaster, Scaler, LH, FH
 from aguasegura.policy import prepare, evaluate, decisions, pareto, POLICIES
 
@@ -95,7 +95,7 @@ def cities():
     out = []
     for c, (lat, lon) in CITIES.items():
         d = load_city(c); t = d[d.time >= '2026-01-01']
-        out.append({'ciudad': c, 'lat': lat, 'lon': lon, 'temp_media_c': r(t['T'].mean(), 1), 'temp_max_c': r(t['T'].max(), 1),
+        out.append({'ciudad': c, 'pais': 'EE. UU.' if c in PAIS_US else 'México', 'lat': lat, 'lon': lon, 'temp_media_c': r(t['T'].mean(), 1), 'temp_max_c': r(t['T'].max(), 1),
                     'hr_media_pct': r(t.RH.mean(), 0), 'pct_horas_seco_factible': r(100 * (t.inlet_d <= INLET_MAX).mean(), 1),
                     'pct_horas_evap_factible': r(100 * (t.inlet_e <= INLET_MAX).mean(), 1)})
     return {'notice': NOTICE, 'inlet_max_c': INLET_MAX, 'cities': out}
@@ -175,7 +175,7 @@ def scenario(dT: float = Query(1.5, ge=0, le=4), lam: float = 1.0, margin: float
 
 @app.get('/pareto')
 def pareto_curve(lam: float = 1.0):
-    """Ahorro de agua vs. horas inseguras evitables al variar el margen (7 ciudades, 2026)."""
+    """Ahorro de agua vs. horas inseguras evitables al variar el margen (todas las ciudades, 2026)."""
     pf = pareto([city_data(c) for c in CITIES], margins=np.arange(-1.0, 4.01, 0.5), lam=lam, q=1)
     return {'notice': NOTICE, 'puntos': [{'politica': x.politica, 'margen_c': float(x.margen_c), 'agua_ahorrada_pct': r(x['agua_ahorrada_%'], 1),
                                           'horas_inseguras_evitables': int(x.horas_riesgo_evitable)} for _, x in pf.iterrows()]}
