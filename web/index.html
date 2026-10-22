@@ -35,10 +35,31 @@
       <a href="#escenarios" data-go="escenarios"><i>04</i>Escenarios</a>
       <a href="#limites" data-go="limites"><i>05</i>Límites</a>
     </nav>
-    <a class="cta-cuenta" href="cuenta.html">Mi cuenta · Ahorro y planes</a>
+    <button type="button" id="pbtn" class="cta-cuenta">Parámetros</button>
   </div>
   <div id="progress"></div>
 </header>
+
+
+<aside id="drawer" class="drawer" aria-label="Parámetros de tu operación">
+  <div class="p-top mono"><span id="d-who">—</span><button id="d-out" type="button" class="dlnk mono">salir</button></div>
+  <h3 class="display xs">Tu operación</h3>
+  <div class="d-kpis">
+    <div><b id="d-net">—</b><span class="mono">beneficio neto MXN</span></div>
+    <div><b id="d-pct">—</b><span class="mono">agua ahorrada</span></div>
+  </div>
+  <label class="dfl"><span class="mono">Ciudad del sitio</span><select id="d-ciudad"></select></label>
+  <label class="dfl"><span class="mono">Peso agua vs. energía · <b id="d-lam-o">1.0</b> L/kWh</span><input id="d-lam" type="range" min="0" max="8" step="0.5" value="1"></label>
+  <label class="dfl"><span class="mono">Margen térmico · <b id="d-mar-o">0.0</b> °C</span><input id="d-margen" type="range" min="-2" max="6" step="0.5" value="0"></label>
+  <div class="dgrid">
+    <label class="dfl"><span class="mono">Agua MXN/m³</span><input id="d-agua" type="number" min="0" step="1"></label>
+    <label class="dfl"><span class="mono">Energía MXN/kWh</span><input id="d-kwh" type="number" min="0" step="0.1"></label>
+    <label class="dfl dwide"><span class="mono">Valor por escasez del agua MXN/m³</span><input id="d-esc" type="number" min="0" step="10"></label>
+  </div>
+  <button type="button" id="d-opt" class="dbtn">Encontrar configuración óptima →</button>
+  <p id="d-msg" class="dnote"></p>
+  <a href="cuenta.html#planes" class="dlnk mono">Planes y portafolio →</a>
+</aside>
 
 <main>
 <!-- ============ HERO ============ -->

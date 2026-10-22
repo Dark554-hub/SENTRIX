@@ -183,3 +183,29 @@ footer a{color:var(--sig)}
   .logo{font-size:22px}
   .stage .sec-head{bottom:50px}
 }
+
+/* panel de parámetros (cuenta) */
+button.cta-cuenta{border:0;font-family:inherit;cursor:pointer}
+.drawer,.drawer *{cursor:auto}
+.drawer button,.drawer a{cursor:pointer}
+.drawer{position:fixed;top:84px;right:clamp(12px,2vw,28px);bottom:16px;width:min(380px,calc(100vw - 24px));z-index:120;overflow:auto;padding:24px;
+  display:flex;flex-direction:column;gap:16px;background:rgba(8,11,13,.88);backdrop-filter:blur(18px);border:1px solid var(--line);
+  transform:translateX(calc(100% + 40px));opacity:0;pointer-events:none;transition:transform .7s var(--ease),opacity .5s}
+.drawer.open{transform:none;opacity:1;pointer-events:auto}
+.drawer .p-top{display:flex;justify-content:space-between;color:var(--sig)}
+.d-kpis{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.d-kpis b{display:block;font-family:var(--serif);font-weight:400;font-size:clamp(26px,2.4vw,36px);line-height:1;letter-spacing:-.02em}
+.d-kpis b.neg{color:var(--warn)} .d-kpis span{display:block;margin-top:6px;color:var(--mut);font-size:10px}
+.dfl{display:flex;flex-direction:column;gap:7px} .dfl>span{color:var(--mut);font-size:10px} .dfl>span b{color:var(--sig);font-weight:400}
+.dfl input[type=number],.dfl select{width:100%;background:transparent;border:0;border-bottom:1px solid var(--line);color:var(--ink);font:400 16px var(--sans);padding:6px 0 8px;outline:none;border-radius:0}
+.dfl input[type=number]:focus,.dfl select:focus{border-bottom-color:var(--sig)} .dfl select option{background:#0b0f12}
+.dfl input[type=range]{accent-color:var(--sig);width:100%}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px} .dwide{grid-column:1/-1}
+.dbtn{padding:13px 16px;border:1px solid var(--sig);color:var(--sig);font-size:13px;text-align:left;transition:background .3s,color .3s}
+.dbtn:hover{background:var(--sig);color:#04100a}
+.dnote{color:var(--mut);font-size:13px;line-height:1.45;min-height:1em} .dnote.no{color:var(--warn)}
+.dlnk{color:var(--mut);text-decoration:underline;text-underline-offset:4px;background:none;border:0;padding:0;font-size:11px}
+.dlnk:hover{color:var(--sig)}
+.dfl input[type=range]{-webkit-appearance:none;appearance:none;height:2px;background:var(--line);margin:10px 0}
+.dfl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--sig);border:0}
+.dfl input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--sig);border:0}

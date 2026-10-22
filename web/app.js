@@ -2,7 +2,15 @@
 /* AguaSegura — front. Consume la API (api.py). DATOS SIMULADOS: clima real, operación simulada. */
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const API = location.protocol === 'file:' ? 'http://localhost:8000' : '';
-const get = async p => { const r = await fetch(API + p); if (!r.ok) throw new Error(p + ' ' + r.status); return r.json(); };
+const TOKEN = (() => { try { return localStorage.getItem('sx_token') || ''; } catch (e) { return ''; } })();
+const toLogin = () => { try { localStorage.removeItem('sx_token'); } catch (e) { /* ok */ } location.replace('/cuenta.html?next=/'); };
+if (!TOKEN && location.protocol !== 'file:') toLogin();
+const call = async (p, method = 'GET', body) => {
+  const r = await fetch(API + p, { method, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + TOKEN }, body: body ? JSON.stringify(body) : undefined });
+  if (r.status === 401) { toLogin(); throw new Error('sesión'); }
+  if (!r.ok) throw new Error(p + ' ' + r.status); return r.json();
+};
+const get = p => call(p);
 const nf = (v, d = 0) => Number(v).toLocaleString('es-MX', { minimumFractionDigits: d, maximumFractionDigits: d });
 const ease = t => 1 - Math.pow(1 - t, 4), clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const NS = 'http://www.w3.org/2000/svg';
@@ -20,7 +28,7 @@ function countTo(node, to, { dec = 0, dur = 1400, pre = '', suf = '' } = {}) {
   node._c = tween(dur, e => { node.textContent = pre + nf(from + (to - from) * e, dec) + suf; });
 }
 
-const S = { cities: [], sum: null, city: 'Querétaro', days: [], fc: null, lam: 1, dT: 0, att: null, metrics: null, map: null, markers: {}, mapReady: false };
+const S = { cities: [], sum: null, city: 'Querétaro', days: [], fc: null, lam: 1, margin: 0, dT: 0, att: null, metrics: null, map: null, markers: {}, mapReady: false };
 const IA = r => r.politica.startsWith('IA');
 
 /* ------------------------------------------------------------------ cursor */
@@ -198,7 +206,7 @@ function showDay(fc) {
 let dayTimer;
 async function loadDay() {
   const i = +$('#scrub').value, day = S.days[i]; if (!day) return;
-  const fc = await get(`/forecast?city=${encodeURIComponent(S.city)}&day=${day}&lam=${S.lam}`); S.fc = fc; showDay(fc);
+  const fc = await get(`/forecast?city=${encodeURIComponent(S.city)}&day=${day}&lam=${S.lam}&margin=${S.margin}`); S.fc = fc; showDay(fc);
 }
 $('#scrub').addEventListener('input', e => { const i = +e.target.value; $('#s-a').textContent = S.days[i]; clearTimeout(dayTimer); dayTimer = setTimeout(loadDay, 90); });
 
@@ -235,12 +243,12 @@ io.observe($('#heat'));
 /* ------------------------------------------------------------------ escenarios */
 function glide() { const on = $('#seg button.on'), g = $('#seg .gl'); g.style.left = on.offsetLeft + 'px'; g.style.width = on.offsetWidth + 'px'; }
 async function loadScen() {
-  const sc = await get(`/scenario?dT=${S.dT}&lam=${S.lam}`), box = $('#sc-bars'), mx = Math.max(...sc.ciudades.map(c => c.agua_status_quo_l));
+  const sc = await get(`/scenario?dT=${S.dT}&lam=${S.lam}&margin=${S.margin}`), box = $('#sc-bars'), mx = Math.max(...sc.ciudades.map(c => c.agua_status_quo_l));
   if (!box.children.length) box.innerHTML = sc.ciudades.map(c => `<div class="sc-row"><span>${c.ciudad}</span><div class="sc-t"><i class="a"></i><i class="b"></i></div><em></em></div>`).join('');
   sc.ciudades.forEach((c, i) => { const r = box.children[i]; setTimeout(() => { $('.a', r).style.width = c.agua_status_quo_l / mx * 100 + '%'; $('.b', r).style.width = c.agua_ia_l / mx * 100 + '%'; $('em', r).textContent = '−' + c.agua_ahorrada_pct.toFixed(0) + '%'; }, i * 60); });
   const sq = sc.ciudades.reduce((s, c) => s + c.agua_status_quo_l, 0), ia = sc.ciudades.reduce((s, c) => s + c.agua_ia_l, 0), en = sc.ciudades.reduce((s, c) => s + c.energia_extra_pct, 0) / sc.ciudades.length;
   countTo($('#t-w'), (sq - ia) / sq * 100, { suf: ' %' }); countTo($('#t-e'), en, { dec: 1, pre: '+', suf: ' %' });
-  const sm = await get(`/summary?lam=${S.lam}`); countTo($('#t-r'), sm.total.find(x => x.politica.startsWith('IA')).horas_inseguras_evitables);
+  const sm = await get(`/summary?lam=${S.lam}&margin=${S.margin}`); countTo($('#t-r'), sm.total.find(x => x.politica.startsWith('IA')).horas_inseguras_evitables);
   drawPareto();
 }
 async function drawPareto() {
@@ -260,7 +268,7 @@ async function drawPareto() {
   });
 }
 $$('#seg button').forEach(b => b.addEventListener('click', () => { $$('#seg button').forEach(x => x.classList.remove('on')); b.classList.add('on'); S.dT = +b.dataset.v; glide(); loadScen(); }));
-let lamT; $('#lam').addEventListener('input', e => { S.lam = +e.target.value; $('#lam-o').textContent = S.lam.toFixed(1); clearTimeout(lamT); lamT = setTimeout(() => { loadScen(); loadDay(); }, 220); });
+let lamT; $('#lam').addEventListener('input', e => { S.lam = +e.target.value; $('#lam-o').textContent = S.lam.toFixed(1); if (window.syncDrawer) syncDrawer(); clearTimeout(lamT); lamT = setTimeout(() => { loadScen(); loadDay(); }, 220); });
 
 /* ------------------------------------------------------------------ datos de ciudad */
 async function loadCityData() {
@@ -271,9 +279,12 @@ $('#heat')._on = once(() => { S.brainShown = true; renderBrain(); });
 
 /* ------------------------------------------------------------------ arranque */
 (async function init() {
-  const ld = $('#ld-n'); let n = 0; const bump = () => { n += 20; ld.textContent = Math.min(n, 99); };
+  if (!TOKEN) return;
+  const ld = $('#ld-n');
+  const [user, cfg] = await Promise.all([get('/me'), get('/settings')]);
+  S.city = cfg.ciudad; S.lam = cfg.lam; S.margin = cfg.margen_c; $('#lam').value = S.lam; $('#lam-o').textContent = S.lam.toFixed(1); let n = 0; const bump = () => { n += 20; ld.textContent = Math.min(n, 99); };
   const seg = $('#seg'); const gl = document.createElement('span'); gl.className = 'gl'; seg.prepend(gl);
-  const [ci, sm, me, dy] = await Promise.all([get('/cities').then(x => (bump(), x)), get('/summary').then(x => (bump(), x)), get('/model/metrics').then(x => (bump(), x)), get('/days?city=Quer%C3%A9taro').then(x => (bump(), x))]);
+  const [ci, sm, me, dy] = await Promise.all([get('/cities').then(x => (bump(), x)), get(`/summary?lam=${S.lam}&margin=${S.margin}`).then(x => (bump(), x)), get('/model/metrics').then(x => (bump(), x)), get('/days?city=Quer%C3%A9taro').then(x => (bump(), x))]);
   S.cities = ci.cities; S.sum = sm; S.metrics = me; S.days = dy.days;
   const sc = $('#scrub'); sc.max = S.days.length - 1; sc.value = Math.floor(S.days.length / 2) + 6; $('#s-a').textContent = S.days[sc.value]; $('#s-b').textContent = S.days[S.days.length - 1];
   $('#pills').innerHTML = S.cities.map(c => `<button data-c="${c.ciudad}" class="${c.ciudad === S.city ? 'on' : ''}">${c.ciudad}</button>`).join('');
@@ -285,4 +296,42 @@ $('#heat')._on = once(() => { S.brainShown = true; renderBrain(); });
   setTimeout(() => { $('#hero').classList.add('in'); const t = sm.total.find(x => x.politica.startsWith('IA')), b = sm.total[0];
     countTo($('#h-pct'), t.agua_ahorrada_pct, { dur: 2200 }); countTo($('#h-l'), b.agua_l - t.agua_l, { dur: 2600 }); }, 500);
   glide(); loadScen(); addEventListener('resize', glide); dispatchEvent(new Event('scroll'));
+  initDrawer(user, cfg);
+  const goHome = setInterval(() => { if (S.mapReady) { clearInterval(goHome); selectCity(S.city, { open: true }); } }, 400); setTimeout(() => clearInterval(goHome), 15000);
 })().catch(e => { console.error(e); $('#ld-n').textContent = '!'; $('.ld-inner .mono').textContent = 'no se pudo conectar con la API · uvicorn api:app --port 8000'; });
+
+
+/* ------------------------------------------------------------------ panel de parámetros de la cuenta */
+function initDrawer(me, cfg) {
+  const d = $('#drawer'), F = { ciudad: $('#d-ciudad'), lam: $('#d-lam'), margen_c: $('#d-margen'), precio_agua_mxn_m3: $('#d-agua'), precio_kwh_mxn: $('#d-kwh'), precio_escasez_mxn_m3: $('#d-esc') };
+  $('#d-who').textContent = me.empresa || me.email;
+  F.ciudad.innerHTML = S.cities.map(c => `<option>${c.ciudad}</option>`).join('');
+  for (const k in F) F[k].value = cfg[k];
+  $('#d-lam-o').textContent = (+cfg.lam).toFixed(1); $('#d-mar-o').textContent = (+cfg.margen_c).toFixed(1);
+  window.syncDrawer = () => { F.lam.value = S.lam; $('#d-lam-o').textContent = S.lam.toFixed(1); };
+  const read = () => ({ ciudad: F.ciudad.value, lam: +F.lam.value, margen_c: +F.margen_c.value, precio_agua_mxn_m3: +F.precio_agua_mxn_m3.value || 0,
+    precio_kwh_mxn: +F.precio_kwh_mxn.value || 0, precio_escasez_mxn_m3: +F.precio_escasez_mxn_m3.value || 0 });
+  const mxn = n => (n < 0 ? '−$' : '$') + Math.abs(n).toLocaleString('es-MX');
+  async function kpis() {
+    try { const r = (await get('/report')).resultado, n = $('#d-net'); n.textContent = mxn(r.beneficio_neto_mxn); n.className = r.beneficio_neto_mxn < 0 ? 'neg' : ''; $('#d-pct').textContent = r.agua_ahorrada_pct + ' %'; } catch (e) { /* sin datos */ }
+  }
+  async function apply(prevCity) {
+    const c = read(); S.lam = c.lam; S.margin = c.margen_c; $('#lam').value = S.lam; $('#lam-o').textContent = S.lam.toFixed(1);
+    $('#d-lam-o').textContent = c.lam.toFixed(1); $('#d-mar-o').textContent = c.margen_c.toFixed(1);
+    try { await call('/settings', 'PUT', c); } catch (e) { $('#d-msg').textContent = 'No se pudo guardar'; return; }
+    S.sum = await get(`/summary?lam=${S.lam}&margin=${S.margin}`);
+    const t = S.sum.total.find(IA), b = S.sum.total[0]; countTo($('#h-pct'), t.agua_ahorrada_pct, { dur: 900 }); countTo($('#h-l'), b.agua_l - t.agua_l, { dur: 900 });
+    if (c.ciudad !== prevCity) selectCity(c.ciudad, { open: true }); else { if ($('#panel').classList.contains('open')) fillPanel(S.city); loadDay(); }
+    loadScen(); kpis(); $('#d-msg').textContent = ''; $('#d-msg').className = 'dnote';
+  }
+  let t, prev = cfg.ciudad; const later = () => { clearTimeout(t); const p = prev; prev = F.ciudad.value; t = setTimeout(() => apply(p), 400); };
+  Object.values(F).forEach(el => el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', later));
+  $('#d-opt').addEventListener('click', async () => {
+    const m = $('#d-msg'); m.className = 'dnote'; m.textContent = 'Probando configuraciones…';
+    try { const r = await get('/report/optimize'); m.textContent = r.recomendacion.mensaje; m.className = 'dnote' + (r.recomendacion.accion === 'usar_ia' ? '' : ' no');
+      if (r.recomendacion.accion === 'usar_ia') { F.lam.value = r.recomendacion.lam; later(); } } catch (e) { m.textContent = e.message; }
+  });
+  $('#pbtn').addEventListener('click', e => { e.preventDefault(); d.classList.toggle('open'); });
+  $('#d-out').addEventListener('click', () => toLogin());
+  kpis(); setTimeout(() => d.classList.add('open'), 1200);
+}

@@ -48,7 +48,7 @@ $('f-auth').addEventListener('submit', async e => {
     const j = await api('/auth/' + (registering ? 'register' : 'login'), 'POST',
       { email: $('email').value.trim(), password: $('pw').value, empresa: $('empresa').value.trim() });
     T = j.token; try { localStorage.setItem('sx_token', T); } catch (x) { /* ok */ }
-    $('pw').value = ''; boot();
+    $('pw').value = ''; const nx = new URLSearchParams(location.search).get('next'); if (nx && nx.startsWith('/') && !nx.startsWith('//')) { location.href = nx; return; } boot();
   } catch (x) { $('aerr').textContent = x.message; }
   $('f-go').disabled = false;
 });
@@ -61,6 +61,7 @@ async function boot() {
   if (!T) return;
   try {
     ME = await api('/me');
+    { const nx = new URLSearchParams(location.search).get('next'); if (nx && nx.startsWith('/') && !nx.startsWith('//')) { location.replace(nx); return; } }
     $('v-out').classList.add('hide'); $('v-in').classList.remove('hide'); $('app').classList.remove('hide');
     document.querySelectorAll('.priv').forEach(a => a.classList.remove('hide'));
     $('who').textContent = ME.empresa || ME.email;
