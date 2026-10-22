@@ -42,7 +42,7 @@
 
 
 <aside id="drawer" class="drawer" aria-label="Parámetros de tu operación">
-  <div class="p-top mono"><span id="d-who">—</span><button id="d-out" type="button" class="dlnk mono">salir</button></div>
+  <div class="p-top mono"><span id="d-who">—</span><span><button id="d-out" type="button" class="dlnk mono">salir</button> &nbsp; <button id="d-x" type="button" class="dlnk" aria-label="Cerrar panel" style="font-size:20px;line-height:1;text-decoration:none">×</button></span></div>
   <h3 class="display xs">Tu operación</h3>
   <div class="d-kpis">
     <div><b id="d-net">—</b><span class="mono">beneficio neto MXN</span></div>
@@ -136,6 +136,21 @@
     <span class="mono" id="s-b">—</span>
   </div>
   <p class="cap mono">arrastra el control para recorrer 2026 · banda = P10–P90 del modelo · verde = seco · azul = evaporativo</p>
+  <div class="live" id="live">
+    <div class="lv-head mono">Operación en vivo · <span id="lv-day">—</span></div>
+    <div class="lv-grid">
+      <div><b id="lv-hour">--:--</b><span class="mono">hora</span></div>
+      <div><b id="lv-mode" class="lv-mode">—</b><span class="mono">modo de enfriamiento</span></div>
+      <div><b id="lv-saved">0</b><span class="mono">litros ahorrados</span></div>
+      <div><b id="lv-temp">—</b><span class="mono">entrada en seco °C · límite 27</span></div>
+    </div>
+    <div class="lv-bar" id="lv-bar" aria-hidden="true"></div>
+    <div class="lv-btns">
+      <button type="button" id="lv-play" class="dbtn">▶ Reproducir el día</button>
+      <button type="button" id="lv-csv" class="dbtn">Descargar plan (CSV)</button>
+      <button type="button" id="lv-pdf" class="dbtn">Reporte PDF</button>
+    </div>
+  </div>
 </section>
 
 <!-- ============ 03 CEREBRO ============ -->

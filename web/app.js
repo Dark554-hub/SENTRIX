@@ -206,7 +206,7 @@ function showDay(fc) {
 let dayTimer;
 async function loadDay() {
   const i = +$('#scrub').value, day = S.days[i]; if (!day) return;
-  const fc = await get(`/forecast?city=${encodeURIComponent(S.city)}&day=${day}&lam=${S.lam}&margin=${S.margin}`); S.fc = fc; showDay(fc);
+  const fc = await get(`/forecast?city=${encodeURIComponent(S.city)}&day=${day}&lam=${S.lam}&margin=${S.margin}`); S.fc = fc; showDay(fc); if (window.liveReset) liveReset();
 }
 $('#scrub').addEventListener('input', e => { const i = +e.target.value; $('#s-a').textContent = S.days[i]; clearTimeout(dayTimer); dayTimer = setTimeout(loadDay, 90); });
 
@@ -296,7 +296,7 @@ $('#heat')._on = once(() => { S.brainShown = true; renderBrain(); });
   setTimeout(() => { $('#hero').classList.add('in'); const t = sm.total.find(x => x.politica.startsWith('IA')), b = sm.total[0];
     countTo($('#h-pct'), t.agua_ahorrada_pct, { dur: 2200 }); countTo($('#h-l'), b.agua_l - t.agua_l, { dur: 2600 }); }, 500);
   glide(); loadScen(); addEventListener('resize', glide); dispatchEvent(new Event('scroll'));
-  initDrawer(user, cfg);
+  S.cfg = cfg; S.user = user; initDrawer(user, cfg);
   const goHome = setInterval(() => { if (S.mapReady) { clearInterval(goHome); selectCity(S.city, { open: true }); } }, 400); setTimeout(() => clearInterval(goHome), 15000);
 })().catch(e => { console.error(e); $('#ld-n').textContent = '!'; $('.ld-inner .mono').textContent = 'no se pudo conectar con la API · uvicorn api:app --port 8000'; });
 
@@ -316,7 +316,7 @@ function initDrawer(me, cfg) {
     try { const r = (await get('/report')).resultado, n = $('#d-net'); n.textContent = mxn(r.beneficio_neto_mxn); n.className = r.beneficio_neto_mxn < 0 ? 'neg' : ''; $('#d-pct').textContent = r.agua_ahorrada_pct + ' %'; } catch (e) { /* sin datos */ }
   }
   async function apply(prevCity) {
-    const c = read(); S.lam = c.lam; S.margin = c.margen_c; $('#lam').value = S.lam; $('#lam-o').textContent = S.lam.toFixed(1);
+    const c = read(); S.cfg = c; S.lam = c.lam; S.margin = c.margen_c; $('#lam').value = S.lam; $('#lam-o').textContent = S.lam.toFixed(1);
     $('#d-lam-o').textContent = c.lam.toFixed(1); $('#d-mar-o').textContent = c.margen_c.toFixed(1);
     try { await call('/settings', 'PUT', c); } catch (e) { $('#d-msg').textContent = 'No se pudo guardar'; return; }
     S.sum = await get(`/summary?lam=${S.lam}&margin=${S.margin}`);
@@ -331,7 +331,78 @@ function initDrawer(me, cfg) {
     try { const r = await get('/report/optimize'); m.textContent = r.recomendacion.mensaje; m.className = 'dnote' + (r.recomendacion.accion === 'usar_ia' ? '' : ' no');
       if (r.recomendacion.accion === 'usar_ia') { F.lam.value = r.recomendacion.lam; later(); } } catch (e) { m.textContent = e.message; }
   });
-  $('#pbtn').addEventListener('click', e => { e.preventDefault(); d.classList.toggle('open'); });
+  const setOpen = on => { d.classList.toggle('open', on); document.body.classList.toggle('dr-open', on); };
+  $('#pbtn').addEventListener('click', e => { e.preventDefault(); setOpen(!d.classList.contains('open')); });
+  $('#d-x').addEventListener('click', () => setOpen(false));
   $('#d-out').addEventListener('click', () => toLogin());
-  kpis(); setTimeout(() => d.classList.add('open'), 1200);
+  kpis(); setTimeout(() => setOpen(true), 1200);
 }
+
+
+/* ------------------------------------------------------------------ operación en vivo, plan y reporte del día */
+(() => {
+  const esc = s => String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  const hh = t => t.slice(11, 16);
+  const rows = fc => fc.horas.map((t, i) => {
+    const dry = fc.decision[i] === 'seco', r = fc.real;
+    return { hora: hh(t), modo: dry ? 'AIRE (seco)' : 'AGUA (evaporativo)', dry,
+      agua: dry ? r.water_d[i] : r.water_e[i], energia: dry ? r.energy_d[i] : r.energy_e[i],
+      entrada: r.inlet_d[i], ahorro: dry ? r.water_e[i] - r.water_d[i] : 0 };
+  });
+  const money = n => (n < 0 ? '-$' : '$') + Math.abs(Math.round(n)).toLocaleString('es-MX');
+  let timer = null, idx = -1;
+
+  function bar() {
+    const b = $('#lv-bar'); if (!S.fc) return; b.innerHTML = '';
+    rows(S.fc).forEach(r => { const c = document.createElement('i'); c.className = r.dry ? 'dry' : 'wet'; b.appendChild(c); });
+  }
+  window.liveReset = () => {
+    stop(); idx = -1; if (!S.fc) return; bar();
+    $('#lv-day').textContent = S.fc.city + ' · ' + S.fc.day; $('#lv-hour').textContent = '--:--';
+    $('#lv-mode').textContent = '—'; $('#lv-mode').className = 'lv-mode'; $('#lv-temp').textContent = '—';
+    $('#lv-saved').textContent = '0'; $('#lv-play').textContent = '▶ Reproducir el día';
+  };
+  function stop() { if (timer) { clearInterval(timer); timer = null; } }
+  function step() {
+    const R = rows(S.fc); idx++;
+    if (idx >= R.length) { stop(); $('#lv-play').textContent = '↻ Repetir'; idx = -1; return; }
+    const r = R[idx], cells = $('#lv-bar').children;
+    [...cells].forEach((c, k) => c.classList.toggle('now', k === idx));
+    $('#lv-hour').textContent = r.hora; const m = $('#lv-mode'); m.textContent = r.dry ? 'AIRE' : 'AGUA'; m.className = 'lv-mode ' + (r.dry ? 'dry' : 'wet');
+    $('#lv-temp').textContent = r.entrada.toFixed(1);
+    $('#lv-saved').textContent = nf(R.slice(0, idx + 1).reduce((s, x) => s + x.ahorro, 0));
+  }
+  $('#lv-play').addEventListener('click', () => {
+    if (!S.fc) return; if (timer) { stop(); $('#lv-play').textContent = '▶ Continuar'; return; }
+    $('#lv-play').textContent = '❚❚ Pausar'; step(); timer = setInterval(step, 650);
+  });
+
+  function file(name, mime, text) {
+    const u = URL.createObjectURL(new Blob([text], { type: mime })), a = document.createElement('a');
+    a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000);
+  }
+  $('#lv-csv').addEventListener('click', () => {
+    if (!S.fc) return; const R = rows(S.fc);
+    const csv = ['hora,modo,agua_litros,energia_kwh,entrada_en_seco_c,agua_ahorrada_l']
+      .concat(R.map(r => [r.hora, r.modo, r.agua.toFixed(1), r.energia.toFixed(1), r.entrada.toFixed(1), r.ahorro.toFixed(1)].join(','))).join('\n');
+    file(`plan_${S.fc.city.replace(/\s+/g, '_')}_${S.fc.day}.csv`, 'text/csv;charset=utf-8', '\ufeff' + csv);
+  });
+  $('#lv-pdf').addEventListener('click', () => {
+    if (!S.fc) return; const R = rows(S.fc), k = S.fc.kpi, c = S.cfg || {};
+    const agua = k.agua_ahorrada_l, kwh = k.energia_extra_kwh;
+    const val = agua / 1000 * ((c.precio_agua_mxn_m3 || 0) + (c.precio_escasez_mxn_m3 || 0)), cost = kwh * (c.precio_kwh_mxn || 0);
+    const w = window.open('', '_blank'); if (!w) { alert('Permite las ventanas emergentes para generar el reporte'); return; }
+    w.document.write(`<!doctype html><html lang="es"><meta charset="utf-8"><title>Reporte SENTRIX ${esc(S.fc.day)}</title>
+<style>body{font:14px system-ui,sans-serif;color:#111;margin:32px}h1{margin:0 0 4px}small{color:#555}table{border-collapse:collapse;width:100%;margin:18px 0}
+td,th{border-bottom:1px solid #ddd;padding:5px 8px;text-align:right}td:first-child,th:first-child,td:nth-child(2),th:nth-child(2){text-align:left}
+.k{display:flex;gap:28px;margin:18px 0}.k b{display:block;font-size:22px}.dry{color:#0a8a4a}.wet{color:#157c8a}.note{color:#555;font-size:12px}</style>
+<h1>Reporte de operación · ${esc(S.fc.city)}</h1><small>${esc(S.user && (S.user.empresa || S.user.email) || '')} · día ${esc(S.fc.day)}</small>
+<div class="k"><div><b>${nf(agua)} L</b>agua ahorrada</div><div><b>${nf(kwh)} kWh</b>energía extra</div><div><b>${money(val)}</b>valor del agua</div><div><b>${money(val - cost)}</b>beneficio neto</div><div><b>${k.horas_seco} h</b>en modo aire</div></div>
+<p class="note">Parámetros: peso agua/energía ${esc(c.lam)} · margen ${esc(c.margen_c)} °C · agua $${esc(c.precio_agua_mxn_m3)}/m³ · energía $${esc(c.precio_kwh_mxn)}/kWh · escasez $${esc(c.precio_escasez_mxn_m3)}/m³</p>
+<table><tr><th>Hora</th><th>Modo</th><th>Agua (L)</th><th>Energía (kWh)</th><th>Entrada en seco (°C)</th></tr>
+${R.map(r => `<tr><td>${r.hora}</td><td class="${r.dry ? 'dry' : 'wet'}">${r.modo}</td><td>${nf(r.agua)}</td><td>${nf(r.energia)}</td><td>${r.entrada.toFixed(1)}</td></tr>`).join('')}</table>
+<p class="note">DATOS SIMULADOS: clima real (Open-Meteo), operación del centro de datos simulada (kit CIFOX). Límite de entrada: 27 °C.</p>
+<script>onload=()=>setTimeout(()=>print(),300)<\/script></html>`);
+    w.document.close();
+  });
+})();

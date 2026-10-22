@@ -209,3 +209,22 @@ button.cta-cuenta{border:0;font-family:inherit;cursor:pointer}
 .dfl input[type=range]{-webkit-appearance:none;appearance:none;height:2px;background:var(--line);margin:10px 0}
 .dfl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--sig);border:0}
 .dfl input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--sig);border:0}
+
+/* operación en vivo + reporte */
+.live{margin-top:34px;padding:24px 0;border-top:1px solid var(--line)}
+.live *{cursor:auto} .live button{cursor:pointer}
+.lv-head{color:var(--sig);margin-bottom:18px}
+.lv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:22px}
+@media(max-width:700px){.lv-grid{grid-template-columns:1fr 1fr}}
+.lv-grid b{display:block;font-family:var(--serif);font-weight:400;font-size:clamp(30px,3.4vw,52px);line-height:1;letter-spacing:-.02em}
+.lv-grid span{display:block;margin-top:6px;color:var(--mut);font-size:10px}
+.lv-mode.dry{color:var(--sig)} .lv-mode.wet{color:var(--aq)}
+.lv-bar{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;margin-bottom:22px}
+.lv-bar i{height:16px;background:var(--line);transition:background .3s,transform .3s}
+.lv-bar i.dry{background:rgba(46,222,127,.55)} .lv-bar i.wet{background:rgba(73,197,182,.45)}
+.lv-bar i.now{transform:scaleY(1.9);outline:1px solid #fff}
+.lv-btns{display:flex;gap:12px;flex-wrap:wrap}
+/* el panel de la ciudad se recorre para no encimarse con Parámetros */
+body.dr-open .panel{right:calc(min(380px,100vw - 24px) + clamp(12px,2vw,28px) + 16px)}
+@media(max-width:1180px){body.dr-open .panel{display:none}}
+@media(max-width:700px){.drawer{top:70px}}
