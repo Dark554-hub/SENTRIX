@@ -48,7 +48,7 @@ $('f-auth').addEventListener('submit', async e => {
     const j = await api('/auth/' + (registering ? 'register' : 'login'), 'POST',
       { email: $('email').value.trim(), password: $('pw').value, empresa: $('empresa').value.trim() });
     T = j.token; try { localStorage.setItem('sx_token', T); } catch (x) { /* ok */ }
-    $('pw').value = ''; const nx = new URLSearchParams(location.search).get('next'); if (nx && nx.startsWith('/') && !nx.startsWith('//')) { location.href = nx; return; } boot();
+    $('pw').value = ''; const nx = new URLSearchParams(location.search).get('next'); location.href = (nx && nx.startsWith('/') && !nx.startsWith('//')) ? nx : '/'; return;
   } catch (x) { $('aerr').textContent = x.message; }
   $('f-go').disabled = false;
 });
