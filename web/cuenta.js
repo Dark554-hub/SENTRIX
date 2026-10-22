@@ -79,7 +79,7 @@ async function save() {
   try {
     await api('/settings', 'PUT', { ciudad: $('ciudad').value, lam: +$('lam').value, margen_c: +$('margen_c').value,
       precio_agua_mxn_m3: +$('precio_agua_mxn_m3').value, precio_kwh_mxn: +$('precio_kwh_mxn').value,
-      precio_escasez_mxn_m3: +$('precio_escasez_mxn_m3').value });
+      precio_escasez_mxn_m3: +$('precio_escasez_mxn_m3').value, capacidad_mw: +$('capacidad_mw').value || 15 });
     $('opt').textContent = ''; await report();
     document.getElementById('ahorro').scrollIntoView({ behavior: 'smooth' });
   } catch (e) { $('serr').textContent = e.message; }

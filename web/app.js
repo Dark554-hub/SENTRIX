@@ -305,25 +305,27 @@ $('#heat')._on = once(() => { S.brainShown = true; renderBrain(); });
 
 /* ------------------------------------------------------------------ panel de parámetros de la cuenta */
 function initDrawer(me, cfg) {
-  const d = $('#drawer'), F = { ciudad: $('#d-ciudad'), lam: $('#d-lam'), margen_c: $('#d-margen'), precio_agua_mxn_m3: $('#d-agua'), precio_kwh_mxn: $('#d-kwh'), precio_escasez_mxn_m3: $('#d-esc') };
+  const d = $('#drawer'), F = { ciudad: $('#d-ciudad'), lam: $('#d-lam'), margen_c: $('#d-margen'), precio_agua_mxn_m3: $('#d-agua'), precio_kwh_mxn: $('#d-kwh'), precio_escasez_mxn_m3: $('#d-esc'), capacidad_mw: $('#d-mw') };
   $('#d-who').textContent = me.empresa || me.email;
   F.ciudad.innerHTML = S.cities.map(c => `<option>${c.ciudad}</option>`).join('');
   for (const k in F) F[k].value = cfg[k];
   $('#d-lam-o').textContent = (+cfg.lam).toFixed(1); $('#d-mar-o').textContent = (+cfg.margen_c).toFixed(1);
   window.syncDrawer = () => { F.lam.value = S.lam; $('#d-lam-o').textContent = S.lam.toFixed(1); };
   const read = () => ({ ciudad: F.ciudad.value, lam: +F.lam.value, margen_c: +F.margen_c.value, precio_agua_mxn_m3: +F.precio_agua_mxn_m3.value || 0,
-    precio_kwh_mxn: +F.precio_kwh_mxn.value || 0, precio_escasez_mxn_m3: +F.precio_escasez_mxn_m3.value || 0 });
+    precio_kwh_mxn: +F.precio_kwh_mxn.value || 0, precio_escasez_mxn_m3: +F.precio_escasez_mxn_m3.value || 0, capacidad_mw: +F.capacidad_mw.value || 15 });
   const mxn = n => (n < 0 ? '−$' : '$') + Math.abs(n).toLocaleString('es-MX');
   async function kpis() {
     try { const r = (await get('/report')).resultado, n = $('#d-net'); n.textContent = mxn(r.beneficio_neto_mxn); n.className = r.beneficio_neto_mxn < 0 ? 'neg' : ''; $('#d-pct').textContent = r.agua_ahorrada_pct + ' %';
-      const L = [['Agua ahorrada', nf(r.agua_ahorrada_l) + ' L'], ['Valor del agua ahorrada', mxn(r.ahorro_agua_mxn)], ['Energía extra', nf(r.energia_extra_kwh) + ' kWh'],
-        ['Costo de la energía extra', mxn(-r.costo_energia_extra_mxn)], ['Beneficio neto 2026', mxn(r.beneficio_neto_mxn)]];
-      $('#cs-kpis').innerHTML = [[nf(r.agua_ahorrada_l) + ' L', 'agua ahorrada · ' + r.agua_ahorrada_pct + ' %', 0], [mxn(r.ahorro_agua_mxn), 'valor del agua', 0],
-        [mxn(-r.costo_energia_extra_mxn), 'energía extra', 0], [mxn(r.beneficio_neto_mxn), 'beneficio neto', r.beneficio_neto_mxn < 0]]
-        .map(x => `<div><b${x[2] ? ' style="color:var(--warn)"' : ''}>${x[0]}</b><span class="mono">${x[1]}</span></div>`).join('');
-      $('#cs-table').innerHTML = '<p class="mono lab">costeo · ' + r.ciudad + ' · 2026</p>' + L.map((x, i) => `<div class="dc-r${i === 4 ? ' tot' + (r.beneficio_neto_mxn < 0 ? ' neg' : '') : ''}"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');
-      $('#cs-note').textContent = r.beneficio_neto_mxn < 0 ? 'Con estos precios, la energía extra cuesta más de lo que vale el agua ahorrada. Sube el valor por escasez del agua (riesgo hídrico, ESG) o usa la configuración óptima.'
-        : 'Con estos precios, ahorrar agua se paga solo: el valor del agua supera el costo de la energía extra.'; } catch (e) { /* sin datos */ }
+      const P = await (await fetch('/plans')).json(), sub = P.pro.precio_mxn_mes * 9, m3 = r.agua_ahorrada_l / 1000, neto = r.beneficio_neto_mxn;
+      const L = [['Agua ahorrada (ene–sep 2026)', nf(r.agua_ahorrada_l) + ' L'], ['Ahorro de agua a $30/m³', mxn(m3 * 30)], ['Ahorro de agua a $60/m³', mxn(m3 * 60)],
+        ['Ahorro de agua a tu precio (con escasez)', mxn(r.ahorro_agua_mxn)], ['Costo de la energía extra', mxn(-r.costo_energia_extra_mxn)], ['Neto con tu precio', mxn(neto)],
+        ['Suscripción SENTRIX Pro (9 meses)', mxn(-sub)], ['Neto tras suscripción', mxn(neto - sub)]];
+      const veces = r.ahorro_agua_mxn / sub;
+      $('#cs-kpis').innerHTML = [[nf(r.agua_ahorrada_l) + ' L', 'agua ahorrada · sitio de ' + r.capacidad_mw + ' MW'], [mxn(m3 * 30) + ' – ' + mxn(m3 * 60), 'ahorro de agua a $30–$60 por m³'],
+        [mxn(sub), 'suscripción Pro · 9 meses'], [veces.toFixed(1) + '×', 'el ahorro de agua cubre la suscripción']]
+        .map(x => `<div><b>${x[0]}</b><span class="mono">${x[1]}</span></div>`).join('');
+      $('#cs-table').innerHTML = '<p class="mono lab">costeo · ' + r.ciudad + ' · ' + r.capacidad_mw + ' MW</p>' + L.map((x, i) => `<div class="dc-r${i === 5 || i === 7 ? ' tot' + ((i === 5 ? neto : neto - sub) < 0 ? ' neg' : '') : ''}"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');
+      $('#cs-note').textContent = 'El ahorro de agua cubre la suscripción ' + veces.toFixed(1) + ' veces. ' + (neto < 0 ? 'Pero la energía extra del modo seco cuesta ' + mxn(r.costo_energia_extra_mxn) + ', más que el agua ahorrada: con estos precios el neto es negativo. El argumento es riesgo hídrico y cumplimiento, no solo pesos.' : 'Además, el valor del agua supera el costo de la energía extra.'); } catch (e) { /* sin datos */ }
   }
   async function apply(prevCity) {
     const c = read(); S.cfg = c; S.lam = c.lam; S.margin = c.margen_c; $('#lam').value = S.lam; $('#lam-o').textContent = S.lam.toFixed(1);

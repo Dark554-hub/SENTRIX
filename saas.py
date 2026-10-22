@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 DB = Path(os.environ.get('SENTRIX_DB', Path(__file__).parent / 'sentrix.db'))
 ITER = 600_000  # OWASP 2023 para PBKDF2-HMAC-SHA256
 TTL = 8 * 3600
+BASE_KW = 157.0  # potencia IT media del sitio simulado (kit CIFOX): escala litros y kWh a la capacidad real
 EMAIL = re.compile(r'^[^@\s]{1,64}@[^@\s]{1,255}\.[^@\s]{2,}$')
 DEMO_UPGRADES = os.environ.get('SENTRIX_DEMO_UPGRADES') == '1'  # sin pasarela de pago, solo para demos
 
@@ -98,6 +99,7 @@ class Settings(BaseModel):
     margen_c: float = Field(0.0, ge=-2, le=6)
     precio_agua_mxn_m3: float = Field(35.0, ge=0, le=1000)
     precio_kwh_mxn: float = Field(2.2, ge=0, le=50)
+    capacidad_mw: float = Field(15.0, ge=0.1, le=500, description='potencia IT del sitio; el simulador base es de 157 kW')
     precio_escasez_mxn_m3: float = Field(0.0, ge=0, le=5000, description='valor sombra del agua (riesgo hídrico, ESG, multas)')
 
 
@@ -184,10 +186,11 @@ def put_settings(s: Settings, u=Depends(user)):
 def _ahorro(city, s, lam=None):
     df = deps['evaluate'](deps['city_data'](city), lam=s.lam if lam is None else lam, margin=s.margen_c)
     b, ia = df.iloc[0], df[df.politica == deps['POLICIES'][3]].iloc[0]
-    agua_l, kwh = float(b.agua_l - ia.agua_l), float(ia.energia_kwh - b.energia_kwh)
+    escala = s.capacidad_mw * 1000 / BASE_KW
+    agua_l, kwh = float(b.agua_l - ia.agua_l) * escala, float(ia.energia_kwh - b.energia_kwh) * escala
     ahorro_agua = agua_l / 1000 * (s.precio_agua_mxn_m3 + s.precio_escasez_mxn_m3)
     costo_energia = kwh * s.precio_kwh_mxn
-    return {'ciudad': city, 'agua_ahorrada_l': round(agua_l), 'agua_ahorrada_pct': round(float(ia['agua_ahorrada_%']), 1),
+    return {'ciudad': city, 'capacidad_mw': s.capacidad_mw, 'agua_ahorrada_l': round(agua_l), 'agua_ahorrada_pct': round(float(ia['agua_ahorrada_%']), 1),
             'energia_extra_kwh': round(kwh), 'ahorro_agua_mxn': round(ahorro_agua),
             'costo_energia_extra_mxn': round(costo_energia), 'beneficio_neto_mxn': round(ahorro_agua - costo_energia),
             'horas_inseguras_evitables': int(ia.horas_riesgo_evitable)}
