@@ -149,3 +149,6 @@ footer{border-top:1px solid var(--line);padding:26px 0;color:var(--mut);display:
 /* reveal for generic blocks */
 .rb{opacity:0;transform:translateY(34px);transition:opacity .9s var(--ease),transform .9s var(--ease)} .rb.in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){*{transition-duration:.01s!important;animation:none!important}}
+
+.cta-cuenta{background:#3cc4bb;color:#04201e;padding:8px 14px;border-radius:999px;font-weight:600;text-decoration:none;font-size:13px;white-space:nowrap}
+.cta-cuenta:hover{filter:brightness(1.1)}
