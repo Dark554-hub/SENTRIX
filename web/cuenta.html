@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SENTRIX — mi cuenta</title>
+<style>
+:root{--bg:#f6f8fa;--fg:#14202b;--card:#fff;--ac:#0b7a75;--mut:#5b6b78;--bd:#d8e0e6}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1519;--fg:#e6eef3;--card:#162129;--ac:#3cc4bb;--mut:#93a4b0;--bd:#26343e}}
+*{box-sizing:border-box}body{margin:0;font:15px system-ui,sans-serif;background:var(--bg);color:var(--fg)}
+main{max-width:900px;margin:0 auto;padding:24px 16px}h1{margin:0 0 4px}a{color:var(--ac)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px;margin:16px 0}
+label{display:block;margin:10px 0 4px;color:var(--mut);font-size:13px}
+input,select{width:100%;padding:9px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--fg);font:inherit}
+button{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer;margin-top:12px}
+button.sec{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.kpi b{display:block;font-size:24px}.kpi span{color:var(--mut);font-size:13px}
+.plan.cur{border-color:var(--ac);border-width:2px}.err{color:#c0392b;min-height:1.2em}.hide{display:none}
+table{width:100%;border-collapse:collapse}td,th{text-align:right;padding:6px;border-bottom:1px solid var(--bd)}td:first-child,th:first-child{text-align:left}
+</style></head><body><main>
+<h1>SENTRIX</h1><p style="color:var(--mut)">Cuenta, parámetros y ahorro de tu sitio · <a href="/">ver observatorio</a></p>
+
+<section id="auth" class="card">
+  <h3>Entrar o crear cuenta</h3>
+  <div class="grid"><div><label>Correo</label><input id="email" type="email"></div>
+  <div><label>Contraseña (mín. 8)</label><input id="pw" type="password"></div>
+  <div><label>Empresa (solo al registrarte)</label><input id="empresa"></div></div>
+  <button data-act="auth('login')">Entrar</button> <button class="sec" data-act="auth('register')">Crear cuenta</button>
+  <div class="err" id="aerr"></div>
+</section>
+
+<div id="app" class="hide">
+  <p><b id="who"></b> · plan <b id="plan"></b> <button class="sec" data-act="logout()">Salir</button></p>
+
+  <section class="card"><h3>Parámetros de mi sitio</h3>
+    <div class="grid">
+      <div><label>Ciudad del sitio</label><select id="ciudad"></select></div>
+      <div><label>Peso agua vs. energía (L por kWh)</label><input id="lam" type="number" step="0.1"></div>
+      <div><label>Margen de seguridad térmica (°C)</label><input id="margen_c" type="number" step="0.5"></div>
+      <div><label>Precio del agua (MXN/m³)</label><input id="precio_agua_mxn_m3" type="number" step="1"></div>
+      <div><label>Precio de la energía (MXN/kWh)</label><input id="precio_kwh_mxn" type="number" step="0.1"></div>
+    </div>
+    <button data-act="save()">Guardar y recalcular</button><div class="err" id="serr"></div>
+  </section>
+
+  <section class="card"><h3>Ahorro vs. enfriamiento evaporativo actual (2026)</h3>
+    <div class="grid" id="kpis"></div>
+    <p style="color:var(--mut);font-size:13px">Datos simulados: clima real, operación simulada. Se reemplaza con tu telemetría en el plan Enterprise.</p>
+  </section>
+
+  <section class="card"><h3>Portafolio (plan Pro)</h3>
+    <div id="port"><button class="sec" data-act="portfolio()">Ver comparativo de 7 ciudades</button></div>
+  </section>
+
+  <section class="card"><h3>Planes</h3><div class="grid" id="plans"></div><div class="err" id="perr"></div></section>
+</div>
+
+<script src="cuenta.js"></script></main></body></html>

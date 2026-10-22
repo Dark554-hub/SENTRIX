@@ -11,6 +11,8 @@ Sistema de apoyo a la decisión para **reducir el agua de enfriamiento de centro
 | `aguasegura/` | Núcleo en Python: simulador (`sim.py`), modelos Transformer/LSTM (`nn.py`), políticas de control (`policy.py`) y baseline PUE/WUE (`core.py`) |
 | `api.py` | API REST (FastAPI) que sirve pronósticos, decisiones y escenarios; también sirve el front web |
 | `web/` | Observatorio web (HTML/JS/CSS) con mapa por ciudad, pronóstico y simulador de escenarios |
+| `saas.py` | Cuentas, login, parámetros guardados, reporte de ahorro en MXN y planes |
+| `web/cuenta.html` | Portal del cliente: login, parámetros de su sitio, ahorro y planes |
 | `app.py` | Panel local en Streamlit |
 | `train.py` | Entrenamiento y evaluación de Transformer y LSTM contra persistencia |
 | `AguaSegura_AI.ipynb` | Notebook con el análisis completo |
@@ -69,6 +71,30 @@ python -m unittest discover -s tests
 ```bash
 python train.py 14   # épocas
 ```
+
+## Cuenta, parámetros y planes
+
+Entra a `http://localhost:8000/cuenta.html`. Cada empresa crea su cuenta, configura su ciudad, el peso agua vs. energía, el margen térmico y sus precios de agua y energía, y ve su **ahorro en litros y en pesos** (beneficio neto = agua ahorrada − energía extra). Los parámetros se guardan por cuenta.
+
+| Plan | Precio | Incluye |
+|---|---|---|
+| Piloto | Gratis | 1 sitio, reporte de ahorro, parámetros guardados |
+| Pro | $4,990 MXN/mes | Hasta 5 sitios, comparativo de portafolio, alertas |
+| Enterprise | Cotización | Telemetría propia, reentrenamiento por sitio, SLA |
+
+Los precios son una propuesta inicial por validar. El cobro (Stripe) está pendiente: subir de plan está bloqueado (HTTP 402) salvo `SENTRIX_DEMO_UPGRADES=1`, pensado solo para demos.
+
+### Seguridad
+
+- Contraseñas con PBKDF2-HMAC-SHA256 (600 000 iteraciones) y sal por usuario; validación de correo y rechazo de contraseñas débiles.
+- Tokens firmados con HMAC-SHA256 que expiran a las 8 h. La llave sale de `SENTRIX_SECRET` o se genera al azar en `.sentrix_secret` (fuera de git). No hay llaves en el código.
+- Bloqueo tras 5 intentos fallidos en 15 min por IP y correo; el login cuesta lo mismo exista o no el usuario (no revela cuentas).
+- Consultas SQL parametrizadas, entradas validadas con rangos (Pydantic) y ciudades contra lista permitida.
+- Permisos por plan hechos en el servidor, no solo en la interfaz (portafolio solo Pro; nadie se sube de plan sin pagar).
+- Cabeceras de seguridad (CSP en el portal, `X-Frame-Options`, `nosniff`, `no-store` en rutas privadas), CORS restringido por `SENTRIX_ORIGINS` y sin scripts inline.
+- Pendiente antes de producción real: HTTPS, base Postgres, rate limit compartido (Redis), recuperación de contraseña y verificación de correo.
+
+Variables de entorno: `SENTRIX_SECRET`, `SENTRIX_DB`, `SENTRIX_ORIGINS`, `SENTRIX_DEMO_UPGRADES`.
 
 ## API
 

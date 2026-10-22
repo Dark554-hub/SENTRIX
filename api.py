@@ -4,6 +4,7 @@ Ejecutar:  uvicorn api:app --port 8000      Docs interactivas: http://localhost:
 DATOS SIMULADOS: clima real (Open-Meteo); carga, torre y consumos simulados (calibrados con el kit CIFOX).
 """
 import json
+import os
 from contextlib import asynccontextmanager
 from functools import lru_cache
 import numpy as np
@@ -33,12 +34,32 @@ async def lifespan(app):
 
 
 app = FastAPI(title='AguaSegura AI', version='1.0', lifespan=lifespan, description=NOTICE)
-app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_methods=['GET'], allow_headers=['*'])
+ORIGINS = [o for o in os.environ.get('SENTRIX_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000').split(',') if o]
+app.add_middleware(CORSMiddleware, allow_origins=ORIGINS, allow_methods=['GET', 'POST', 'PUT'], allow_headers=['Authorization', 'Content-Type'])
+
+
+@app.middleware('http')
+async def security_headers(request, call_next):
+    resp = await call_next(request)
+    resp.headers.update({'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'no-referrer',
+                         'Permissions-Policy': 'geolocation=(), camera=(), microphone=()'})
+    if request.url.path.startswith('/cuenta') or request.url.path.startswith(('/auth', '/me', '/settings', '/report')):
+        resp.headers['Cache-Control'] = 'no-store'
+    if request.url.path.startswith('/cuenta'):
+        resp.headers['Content-Security-Policy'] = "default-src 'self'; style-src 'unsafe-inline'; frame-ancestors 'none'"
+    return resp
+
+
+import saas
+app.include_router(saas.router)
 
 
 @lru_cache(maxsize=64)
 def city_data(city: str, dT: float = 0.0):
     return prepare(city, S['model'], S['sc'], dev, dT=dT)
+
+
+saas.deps.update(city_data=city_data, evaluate=evaluate, POLICIES=POLICIES, CITIES=CITIES)
 
 
 def _city(city):

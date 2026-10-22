@@ -6,3 +6,5 @@ __pycache__/
 .pytest_cache/
 .vscode/
 *.log
+sentrix.db
+.sentrix_secret
