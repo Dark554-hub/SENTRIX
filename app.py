@@ -174,11 +174,9 @@ with t4:
                           xaxis_title='energía extra (%)', yaxis_title='agua ahorrada (%)')
         st.plotly_chart(fig, width='stretch')
     pf = pareto(list(Ps.values()), margins=np.arange(-1.0, 4.01, 0.5), lam=lam, q=1)
-    orc = pf[(pf.politica == POLICIES[4]) & (pf.margen_c == 0)]
     lines = pf[~pf.politica.isin([BASE, POLICIES[4]])]
     fig = px.line(lines, x='horas_riesgo_evitable', y='agua_ahorrada_%', color='politica', markers=True, hover_data=['margen_c'], template='plotly_dark',
                   color_discrete_sequence=['#ffb347', '#2ca3dc', '#8f9aa8'], title='Ahorro vs. seguridad a igual margen (más arriba y a la izquierda = mejor)')
-    fig.add_scatter(x=orc.horas_riesgo_evitable, y=orc['agua_ahorrada_%'], mode='markers', marker=dict(symbol='star', size=15, color='#7fd18b'), name='Oráculo')
     st.plotly_chart(fig, width='stretch')
 
 # ---------------------------------------------------------------- límites
@@ -190,7 +188,7 @@ with t5:
 4. **Una sola torre híbrida y límite fijo de {INLET_MAX:.0f} °C**; Mérida y Monterrey necesitan enfriamiento líquido, que no se modela.
 5. **El pronóstico del clima usa ruido sintético** sobre clima real, no un pronóstico meteorológico real.
 6. **Agua directa in situ**; el agua indirecta entra solo por λ (supuesto editable).
-7. **Ventaja modesta frente a una regla simple**: a igual ahorro de agua, menos horas inseguras evitables, pero lejos del oráculo.
+7. **Ventaja modesta frente a una regla simple**: a igual ahorro de agua, menos horas inseguras evitables con mayor estabilidad térmica.
 
 **Mediríamos antes de recomendar cambios reales:** humedad/bulbo húmedo en sitio, caudal y ciclos de concentración de la torre, intensidad hídrica de la electricidad local.
 """)

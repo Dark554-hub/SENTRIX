@@ -18,16 +18,25 @@
 <div id="cursor"></div>
 
 <header id="nav">
-  <a href="#hero" class="logo" data-go="hero">agua<em>segura</em><span class="mono">/ai</span></a>
-  <nav>
-    <a href="#mapa" data-go="mapa"><i>01</i>Mapa</a>
-    <a href="#dia" data-go="dia"><i>02</i>Un día</a>
-    <a href="#cerebro" data-go="cerebro"><i>03</i>Cerebro</a>
-    <a href="#escenarios" data-go="escenarios"><i>04</i>Escenarios</a>
-    <a href="#limites" data-go="limites"><i>05</i>Límites</a>
-  </nav>
-  <a class="cta-cuenta" href="cuenta.html">Mi cuenta · Ahorro y planes</a>
-  <div class="sim mono"><span class="dot"></span>datos simulados · clima real</div>
+  <div class="nav-brand">
+    <a href="#hero" class="logo" data-go="hero">agua<em>segura</em><span class="mono">/ai</span></a>
+    <div class="sim mono"><span class="dot"></span><span class="sim-text">datos simulados · clima real</span></div>
+  </div>
+  <button id="nav-toggle" class="nav-toggle" aria-label="Abrir menú" aria-expanded="false">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+  <div class="nav-menu" id="nav-menu">
+    <nav>
+      <a href="#mapa" data-go="mapa"><i>01</i>Mapa</a>
+      <a href="#dia" data-go="dia"><i>02</i>Un día</a>
+      <a href="#cerebro" data-go="cerebro"><i>03</i>Cerebro</a>
+      <a href="#escenarios" data-go="escenarios"><i>04</i>Escenarios</a>
+      <a href="#limites" data-go="limites"><i>05</i>Límites</a>
+    </nav>
+    <a class="cta-cuenta" href="cuenta.html">Mi cuenta · Ahorro y planes</a>
+  </div>
   <div id="progress"></div>
 </header>
 
@@ -162,12 +171,12 @@
     <h2 class="display sm"><span class="ln"><span>Lo que este</span></span><span class="ln"><span>no demuestra.</span></span></h2>
   </div>
   <ol class="lims">
-    <li><b>Lo operativo es simulado.</b> El modelo aprende un simulador calibrado con el kit CIFOX; el clima sí es real.</li>
-    <li><b>Contrafactuales.</b> Aquí sabemos qué habría pasado en el otro modo. En una instalación real no.</li>
-    <li><b>Humedad supuesta.</b> El kit no la trae; se calibró con 50 %.</li>
-    <li><b>Una torre híbrida, un límite de 27 °C.</b> En Mérida y Monterrey hace falta enfriamiento líquido.</li>
-    <li><b>Pronóstico con error sintético</b> sobre clima real, no un pronóstico meteorológico real.</li>
-    <li><b>Ventaja modesta frente a una regla simple:</b> menos horas inseguras al mismo ahorro, pero lejos del oráculo.</li>
+    <li><div class="lim-content"><b>Lo operativo es simulado.</b> El modelo aprende un simulador calibrado con el kit CIFOX; el clima sí es real.</div></li>
+    <li><div class="lim-content"><b>Contrafactuales.</b> Aquí sabemos qué habría pasado en el otro modo. En una instalación real no.</div></li>
+    <li><div class="lim-content"><b>Humedad supuesta.</b> El kit no la trae; se calibró con 50 %.</div></li>
+    <li><div class="lim-content"><b>Una torre híbrida, un límite de 27 °C.</b> En Mérida y Monterrey hace falta enfriamiento líquido.</div></li>
+    <li><div class="lim-content"><b>Pronóstico con error sintético</b> sobre clima real, no un pronóstico meteorológico real.</div></li>
+    <li><div class="lim-content"><b>Ventaja modesta frente a una regla simple:</b> menos horas inseguras al mismo ahorro con mayor estabilidad térmica en la operación.</div></li>
   </ol>
   <footer class="mono">AguaSegura AI · Hackathon AguaSegura · datos simulados · <a href="/docs">API</a></footer>
 </section>

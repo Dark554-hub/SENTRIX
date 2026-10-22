@@ -50,9 +50,31 @@ const curtain = $('#curtain');
 function navTo(id) {
   const t = document.getElementById(id); if (!t) return;
   curtain.className = 'in';
-  setTimeout(() => { window.scrollTo({ top: t.offsetTop, behavior: 'instant' }); curtain.className = 'out'; setTimeout(() => curtain.className = '', 600); }, 560);
+  const navH = $('#nav') ? $('#nav').offsetHeight : 64;
+  const targetY = id === 'hero' ? 0 : Math.max(0, t.offsetTop - navH + 10);
+  setTimeout(() => { window.scrollTo({ top: targetY, behavior: 'instant' }); curtain.className = 'out'; setTimeout(() => curtain.className = '', 600); }, 560);
 }
-document.addEventListener('click', e => { const a = e.target.closest('[data-go]'); if (a) { e.preventDefault(); navTo(a.dataset.go); } });
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-go]');
+  if (a) {
+    e.preventDefault();
+    navTo(a.dataset.go);
+    const navToggle = $('#nav-toggle'), navMenu = $('#nav-menu');
+    if (navToggle && navMenu) {
+      navToggle.classList.remove('open');
+      navMenu.classList.remove('open');
+      navToggle.setAttribute('aria-expanded', 'false');
+    }
+  }
+});
+const navToggle = $('#nav-toggle'), navMenu = $('#nav-menu');
+if (navToggle && navMenu) {
+  navToggle.addEventListener('click', () => {
+    const open = navToggle.classList.toggle('open');
+    navMenu.classList.toggle('open', open);
+    navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+}
 const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); e.target._on && e.target._on(); } }), { threshold: .18 });
 ['.rv', '.rb', '.lims li', '.sec-head'].forEach(s => $$(s).forEach(n => io.observe(n)));
 $$('.pills,.day-kpis,.chart-wrap,.scrub,.two>div,.ctrl,.cap').forEach(n => { n.classList.add('rb'); io.observe(n); });
@@ -223,7 +245,7 @@ async function loadScen() {
 }
 async function drawPareto() {
   const pf = await get(`/pareto?lam=${S.lam}`), svg = $('#pareto'); svg.innerHTML = '';
-  const pts = pf.puntos.filter(p => !p.politica.startsWith('Siempre')), xs = pts.map(p => p.horas_inseguras_evitables), ys = pts.map(p => p.agua_ahorrada_pct);
+  const pts = pf.puntos.filter(p => !p.politica.startsWith('Siempre') && !p.politica.startsWith('Or')), xs = pts.map(p => p.horas_inseguras_evitables), ys = pts.map(p => p.agua_ahorrada_pct);
   const x0 = 46, x1 = 540, y0 = 270, y1 = 14, xmax = Math.max(...xs) * 1.05, ymin = Math.min(...ys) - 2, ymax = Math.max(...ys) + 2;
   const X = v => x0 + v / xmax * (x1 - x0), Y = v => y0 - (v - ymin) / (ymax - ymin) * (y0 - y1);
   for (let k = 0; k <= 4; k++) { const v = ymin + (ymax - ymin) * k / 4; el('line', { x1: x0, x2: x1, y1: Y(v), y2: Y(v), stroke: 'rgba(233,240,234,.08)' }, svg); el('text', { x: x0 - 8, y: Y(v) + 3, 'text-anchor': 'end' }, svg).textContent = v.toFixed(0) + '%'; }
@@ -236,7 +258,6 @@ async function drawPareto() {
     p.style.transition = 'stroke-dashoffset 1.6s cubic-bezier(.22,.9,.2,1) ' + n * .2 + 's'; requestAnimationFrame(() => requestAnimationFrame(() => p.style.strokeDashoffset = 0));
     const first = line[0]; el('text', { x: X(first.horas_inseguras_evitables), y: Y(first.agua_ahorrada_pct) - 9, fill: cfg[k][0], 'text-anchor': 'middle', style: `fill:${cfg[k][0]}` }, svg).textContent = k === 'IA' ? 'IA' : k === 'Reactiva' ? 'regla' : 'ayer';
   });
-  const o = pts.find(p => p.politica.startsWith('Or') && p.margen_c === 0); if (o) { el('path', { d: 'M0-9L2.6-3 9-3 4-1 6 6 0 2-6 6-4-1-9-3-2.6-3Z', transform: `translate(${X(o.horas_inseguras_evitables)},${Y(o.agua_ahorrada_pct)})`, fill: '#e9f0ea' }, svg); el('text', { x: X(o.horas_inseguras_evitables) + 12, y: Y(o.agua_ahorrada_pct) + 3, style: 'fill:#e9f0ea' }, svg).textContent = 'oráculo'; }
 }
 $$('#seg button').forEach(b => b.addEventListener('click', () => { $$('#seg button').forEach(x => x.classList.remove('on')); b.classList.add('on'); S.dT = +b.dataset.v; glide(); loadScen(); }));
 let lamT; $('#lam').addEventListener('input', e => { S.lam = +e.target.value; $('#lam-o').textContent = S.lam.toFixed(1); clearTimeout(lamT); lamT = setTimeout(() => { loadScen(); loadDay(); }, 220); });
