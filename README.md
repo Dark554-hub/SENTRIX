@@ -74,7 +74,7 @@ python train.py 14   # épocas
 
 ## Cuenta, parámetros y planes
 
-Entra a `http://localhost:8000/cuenta.html`. Cada empresa crea su cuenta, configura su ciudad, el peso agua vs. energía, el margen térmico y sus precios de agua y energía, y ve su **ahorro en litros y en pesos** (beneficio neto = agua ahorrada − energía extra). Los parámetros se guardan por cuenta.
+Entra a `http://localhost:8000/cuenta.html`. Cada empresa crea su cuenta, configura su ciudad, el peso agua vs. energía, el margen térmico y sus precios de agua y energía, y ve su **ahorro en litros y en pesos** (beneficio neto = agua ahorrada − energía extra). Los parámetros se guardan por cuenta. El botón **Encontrar la configuración óptima** barre el peso agua/energía y recomienda el que maximiza el beneficio neto con tus precios; si ahorrar agua no se paga solo, recomienda mantener el enfriamiento evaporativo. Para justificar el ahorro en zonas de estrés hídrico, el campo *valor por escasez del agua* (riesgo, ESG, multas) suma ese valor al agua ahorrada.
 
 | Plan | Precio | Incluye |
 |---|---|---|

@@ -16,12 +16,18 @@ async function boot(){
     renderPlans(me.plan);report()}catch(e){logout()}}
 async function save(){$('serr').textContent='';
   try{await api('/settings','PUT',{ciudad:$('ciudad').value,lam:+$('lam').value,margen_c:+$('margen_c').value,
-    precio_agua_mxn_m3:+$('precio_agua_mxn_m3').value,precio_kwh_mxn:+$('precio_kwh_mxn').value});report()}catch(e){$('serr').textContent=e.message}}
+    precio_agua_mxn_m3:+$('precio_agua_mxn_m3').value,precio_escasez_mxn_m3:+$('precio_escasez_mxn_m3').value,precio_kwh_mxn:+$('precio_kwh_mxn').value});report()}catch(e){$('serr').textContent=e.message}}
 async function report(){$('kpis').innerHTML='<span>Calculando…</span>';
   const r=(await api('/report')).resultado;
   const k=(v,l)=>`<div class="kpi"><b>${v}</b><span>${l}</span></div>`;
   $('kpis').innerHTML=k(r.agua_ahorrada_l.toLocaleString('es-MX')+' L','agua ahorrada ('+r.agua_ahorrada_pct+'%)')+k(mxn(r.ahorro_agua_mxn),'ahorro en agua')+
    k(mxn(r.costo_energia_extra_mxn),'costo de energía extra')+k(mxn(r.beneficio_neto_mxn),'beneficio neto')+k(r.horas_inseguras_evitables,'horas inseguras evitables')}
+async function optimize(){const o=$('opt');o.textContent='Calculando…';
+  try{const r=await api('/report/optimize');o.textContent='';
+    const p=document.createElement('p');p.style.fontWeight='600';p.textContent=r.recomendacion.mensaje;o.appendChild(p);
+    const t=document.createElement('table');t.innerHTML='<tr><th>Peso agua/energía</th><th>Agua ahorrada (L)</th><th>Neto (MXN)</th></tr>';
+    r.candidatos.forEach(c=>{const tr=t.insertRow();[c.lam,c.agua_ahorrada_l.toLocaleString('es-MX'),mxn(c.beneficio_neto_mxn)].forEach(v=>{tr.insertCell().textContent=v})});o.appendChild(t)
+  }catch(e){o.textContent=e.message}}
 async function portfolio(){
   try{const p=await api('/report/portfolio');
     $('port').innerHTML='<table><tr><th>Ciudad</th><th>Agua ahorrada (L)</th><th>Neto (MXN)</th></tr>'+p.ciudades.map(c=>`<tr><td>${c.ciudad}</td><td>${c.agua_ahorrada_l.toLocaleString('es-MX')}</td><td>${mxn(c.beneficio_neto_mxn)}</td></tr>`).join('')+`</table><p><b>Total neto: ${mxn(p.total_beneficio_neto_mxn)}</b></p>`
@@ -32,7 +38,7 @@ async function renderPlans(cur){const P=await (await fetch('/plans')).json();
    ${id===cur?'<i>Plan actual</i>':`<button data-act="pick('${id}')">${id==='enterprise'?'Contactar':'Cambiar'}</button>`}</div>`).join('')}
 async function pick(id){$('perr').textContent='';
   try{await api('/plan/'+id,'POST');boot()}catch(e){$('perr').textContent=e.message}}
-const ACT={auth,logout,save,portfolio,pick};
+const ACT={auth,logout,save,portfolio,pick,optimize};
 boot();
 
 document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(!a)return;const m=a.dataset.act.match(/^(\w+)\((?:'([^']*)')?\)$/);if(m&&ACT[m[1]])ACT[m[1]](m[2])});

@@ -98,6 +98,7 @@ class Settings(BaseModel):
     margen_c: float = Field(0.0, ge=-2, le=6)
     precio_agua_mxn_m3: float = Field(35.0, ge=0, le=1000)
     precio_kwh_mxn: float = Field(2.2, ge=0, le=50)
+    precio_escasez_mxn_m3: float = Field(0.0, ge=0, le=5000, description='valor sombra del agua (riesgo hídrico, ESG, multas)')
 
 
 _FAILS = {}  # (ip, email) -> [intentos fallidos, desde]
@@ -180,11 +181,11 @@ def put_settings(s: Settings, u=Depends(user)):
     return s
 
 
-def _ahorro(city, s):
-    df = deps['evaluate'](deps['city_data'](city), lam=s.lam, margin=s.margen_c)
+def _ahorro(city, s, lam=None):
+    df = deps['evaluate'](deps['city_data'](city), lam=s.lam if lam is None else lam, margin=s.margen_c)
     b, ia = df.iloc[0], df[df.politica == deps['POLICIES'][3]].iloc[0]
     agua_l, kwh = float(b.agua_l - ia.agua_l), float(ia.energia_kwh - b.energia_kwh)
-    ahorro_agua = agua_l / 1000 * s.precio_agua_mxn_m3
+    ahorro_agua = agua_l / 1000 * (s.precio_agua_mxn_m3 + s.precio_escasez_mxn_m3)
     costo_energia = kwh * s.precio_kwh_mxn
     return {'ciudad': city, 'agua_ahorrada_l': round(agua_l), 'agua_ahorrada_pct': round(float(ia['agua_ahorrada_%']), 1),
             'energia_extra_kwh': round(kwh), 'ahorro_agua_mxn': round(ahorro_agua),
@@ -197,6 +198,20 @@ def report(u=Depends(user)):
     """Ahorro 2026 vs. status quo en tu sitio, con tus parámetros y precios."""
     s = _settings(u['id'])
     return {'notice': 'DATOS SIMULADOS (clima real, operación simulada).', 'parametros': s, 'resultado': _ahorro(s.ciudad, s)}
+
+
+@router.get('/report/optimize')
+def optimize(u=Depends(user)):
+    """Barre el peso agua/energía (lam) en tu sitio y recomienda el que maximiza el beneficio neto con TUS precios.
+    Incluye 'mantener evaporativo' (beneficio 0): si ahorrar agua no conviene, lo dice."""
+    s = _settings(u['id'])
+    cand = [dict(_ahorro(s.ciudad, s, lam), lam=lam) for lam in (0, 0.5, 1, 2, 4, 8)]
+    best = max(cand, key=lambda x: x['beneficio_neto_mxn'])
+    if best['beneficio_neto_mxn'] <= 0:
+        rec = {'accion': 'mantener_evaporativo', 'mensaje': 'Con estos precios ahorrar agua no se paga solo. Sube el valor de escasez del agua (riesgo hídrico/ESG) para justificarlo.'}
+    else:
+        rec = {'accion': 'usar_ia', 'lam': best['lam'], 'mensaje': f"Usa peso agua/energía = {best['lam']}: beneficio neto estimado {best['beneficio_neto_mxn']:,} MXN en 2026."}
+    return {'ciudad': s.ciudad, 'recomendacion': rec, 'candidatos': cand}
 
 
 @router.get('/report/portfolio')

@@ -37,12 +37,15 @@ table{width:100%;border-collapse:collapse}td,th{text-align:right;padding:6px;bor
       <div><label>Margen de seguridad térmica (°C)</label><input id="margen_c" type="number" step="0.5"></div>
       <div><label>Precio del agua (MXN/m³)</label><input id="precio_agua_mxn_m3" type="number" step="1"></div>
       <div><label>Precio de la energía (MXN/kWh)</label><input id="precio_kwh_mxn" type="number" step="0.1"></div>
+      <div><label>Valor por escasez del agua (MXN/m³, riesgo/ESG)</label><input id="precio_escasez_mxn_m3" type="number" step="10"></div>
     </div>
     <button data-act="save()">Guardar y recalcular</button><div class="err" id="serr"></div>
   </section>
 
   <section class="card"><h3>Ahorro vs. enfriamiento evaporativo actual (2026)</h3>
     <div class="grid" id="kpis"></div>
+    <button class="sec" data-act="optimize()">Encontrar la configuración óptima para mi sitio</button>
+    <div id="opt"></div>
     <p style="color:var(--mut);font-size:13px">Datos simulados: clima real, operación simulada. Se reemplaza con tu telemetría en el plan Enterprise.</p>
   </section>
 
