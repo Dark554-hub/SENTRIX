@@ -230,3 +230,9 @@ body.dr-open .panel{right:calc(min(380px,100vw - 24px) + clamp(12px,2vw,28px) + 
 @media(max-width:700px){.drawer{top:70px}}
 
 #p-note[data-us]::after{content:'Ciudad de EE. UU.: el modelo no se entrenó con ella; es una prueba de transferencia.';display:block;margin-top:10px;color:var(--warn)}
+
+.dcost{border-bottom:1px solid var(--line);padding-bottom:14px}
+.dc-h{color:var(--mut);font-size:10px;margin-bottom:8px}
+.dc-r{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-size:14px;color:var(--mut)}
+.dc-r b{font-weight:400;color:var(--ink);font-variant-numeric:tabular-nums}
+.dc-r.tot{border-top:1px solid var(--line);margin-top:4px;padding-top:9px} .dc-r.tot b{color:var(--sig);font-weight:500} .dc-r.tot.neg b{color:var(--warn)}

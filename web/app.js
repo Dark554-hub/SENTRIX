@@ -315,7 +315,10 @@ function initDrawer(me, cfg) {
     precio_kwh_mxn: +F.precio_kwh_mxn.value || 0, precio_escasez_mxn_m3: +F.precio_escasez_mxn_m3.value || 0 });
   const mxn = n => (n < 0 ? '−$' : '$') + Math.abs(n).toLocaleString('es-MX');
   async function kpis() {
-    try { const r = (await get('/report')).resultado, n = $('#d-net'); n.textContent = mxn(r.beneficio_neto_mxn); n.className = r.beneficio_neto_mxn < 0 ? 'neg' : ''; $('#d-pct').textContent = r.agua_ahorrada_pct + ' %'; } catch (e) { /* sin datos */ }
+    try { const r = (await get('/report')).resultado, n = $('#d-net'); n.textContent = mxn(r.beneficio_neto_mxn); n.className = r.beneficio_neto_mxn < 0 ? 'neg' : ''; $('#d-pct').textContent = r.agua_ahorrada_pct + ' %';
+      const L = [['Agua ahorrada', nf(r.agua_ahorrada_l) + ' L'], ['Valor del agua ahorrada', mxn(r.ahorro_agua_mxn)], ['Energía extra', nf(r.energia_extra_kwh) + ' kWh'],
+        ['Costo de la energía extra', '−' + mxn(r.costo_energia_extra_mxn).replace('$', '$')], ['Beneficio neto 2026', mxn(r.beneficio_neto_mxn)]];
+      $('#d-cost').innerHTML = '<div class="mono dc-h">Costeo · ' + r.ciudad + ' · 2026</div>' + L.map((x, i) => `<div class="dc-r${i === 4 ? ' tot' + (r.beneficio_neto_mxn < 0 ? ' neg' : '') : ''}"><span>${x[0]}</span><b>${x[1]}</b></div>`).join(''); } catch (e) { /* sin datos */ }
   }
   async function apply(prevCity) {
     const c = read(); S.cfg = c; S.lam = c.lam; S.margin = c.margen_c; $('#lam').value = S.lam; $('#lam-o').textContent = S.lam.toFixed(1);
