@@ -1,0 +1,94 @@
+# SENTRIX
+
+Sistema de apoyo a la decisión para **reducir el agua de enfriamiento de centros de datos de IA en México**. Combina clima real con un simulador físico de enfriamiento híbrido (seco / evaporativo) y un modelo Transformer que pronostica consumo de agua y energía 24 h por delante para decidir, hora a hora, qué modo de enfriamiento conviene.
+
+> **Aviso:** la operación del centro de datos (carga, torre, consumos) es **simulada**, calibrada con el kit CIFOX. El clima es real (Open-Meteo). No son mediciones de un centro de datos real.
+
+## Qué incluye
+
+| Componente | Descripción |
+|---|---|
+| `aguasegura/` | Núcleo en Python: simulador (`sim.py`), modelos Transformer/LSTM (`nn.py`), políticas de control (`policy.py`) y baseline PUE/WUE (`core.py`) |
+| `api.py` | API REST (FastAPI) que sirve pronósticos, decisiones y escenarios; también sirve el front web |
+| `web/` | Observatorio web (HTML/JS/CSS) con mapa por ciudad, pronóstico y simulador de escenarios |
+| `app.py` | Panel local en Streamlit |
+| `train.py` | Entrenamiento y evaluación de Transformer y LSTM contra persistencia |
+| `AguaSegura_AI.ipynb` | Notebook con el análisis completo |
+| `models/` | Modelos entrenados y métricas |
+| `data/` | Clima real y simulaciones por ciudad (7 ciudades) |
+| `tests/` | Pruebas unitarias |
+
+## Cómo funciona
+
+1. **Datos:** clima horario real de 7 ciudades (Chihuahua, Ciudad de México, Guadalajara, Mexicali, Monterrey, Mérida, Querétaro).
+2. **Simulador:** carga de IA, estado de la torre y consumos de agua/energía, calibrados con el kit CIFOX (PUE evaporativo ≈ 1.24, PUE aire ≈ 1.37, WUE evaporativo ≈ 0.9 L/kWh IT).
+3. **Pronóstico:** Transformer con intervalos P10/P50/P90, entrenado con histórico y evaluado en 2026 (clima nunca visto) contra LSTM y persistencia.
+4. **Políticas comparadas:** siempre evaporativo (status quo), reactiva, pronóstico ingenuo (ayer), **IA (Transformer)** y oráculo (techo teórico).
+5. **Decisión:** el modo seco ahorra agua pero cuesta energía; un parámetro `lam` y un margen de seguridad térmica controlan el equilibrio (frente de Pareto).
+
+### Resultados del modelo (MAE en 2026)
+
+| Modelo | Agua evaporativa (L) | Energía evaporativa (kWh) |
+|---|---|---|
+| **Transformer (atención)** | **6.35** | **3.57** |
+| LSTM | 6.36 | 3.90 |
+| Persistencia (ayer) | 18.64 | 16.19 |
+
+Detalle completo en [`models/metrics.json`](models/metrics.json).
+
+## Instalación y ejecución
+
+Requiere Python 3.10+.
+
+```bash
+pip install -r requirements.txt
+```
+
+**API + web** (docs interactivas en `/docs`):
+
+```bash
+uvicorn api:app --port 8000
+# web:  http://localhost:8000
+# docs: http://localhost:8000/docs
+```
+
+**Panel Streamlit:**
+
+```bash
+streamlit run app.py
+```
+
+**Pruebas:**
+
+```bash
+python -m unittest discover -s tests
+```
+
+**Re-entrenar modelos** (opcional, el repo ya incluye los entrenados):
+
+```bash
+python train.py 14   # épocas
+```
+
+## API
+
+Referencia completa en [`README_API.md`](README_API.md). Endpoints principales: `/health`, `/cities`, `/summary`, `/days`, `/forecast`, `/model/metrics`, `/model/attention`, `/scenario`, `/pareto`. Cada respuesta incluye un campo `notice` que indica que los datos son simulados.
+
+## Limitaciones
+
+- La operación del centro de datos es sintética; los resultados son una prueba de concepto, no una garantía de ahorro.
+- El escenario de ΔT es una prueba de estrés, no una predicción climática.
+- No se modelan humedad de bulbo húmedo detallada, ciclos de concentración ni caudal real.
+- No expongas el servidor local a internet.
+
+## Equipo
+
+<!-- Completar con los integrantes del equipo -->
+
+| Nombre | Rol |
+|---|---|
+| _Por completar_ | _Por completar_ |
+
+## Licencia y créditos
+
+Los datos simulados se basan en el kit CIFOX (MIT); ver [`LICENSE-CIFOX-kit`](LICENSE-CIFOX-kit). Clima: [Open-Meteo](https://open-meteo.com/).

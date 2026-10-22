@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AguaSegura — observatorio del agua de enfriamiento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 fill=%27%2306080a%27/%3E%3Cpath d=%27M16 5c5 6 8 10 8 14a8 8 0 0 1-16 0c0-4 3-8 8-14z%27 fill=%27%232ede7f%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="loading">
+
+<div id="loader"><div class="ld-inner"><span class="mono">cargando clima real · modelo · mapa</span><b id="ld-n">0</b></div></div>
+<div id="curtain"></div>
+<div id="cursor"></div>
+
+<header id="nav">
+  <a href="#hero" class="logo" data-go="hero">agua<em>segura</em><span class="mono">/ai</span></a>
+  <nav>
+    <a href="#mapa" data-go="mapa"><i>01</i>Mapa</a>
+    <a href="#dia" data-go="dia"><i>02</i>Un día</a>
+    <a href="#cerebro" data-go="cerebro"><i>03</i>Cerebro</a>
+    <a href="#escenarios" data-go="escenarios"><i>04</i>Escenarios</a>
+    <a href="#limites" data-go="limites"><i>05</i>Límites</a>
+  </nav>
+  <div class="sim mono"><span class="dot"></span>datos simulados · clima real</div>
+  <div id="progress"></div>
+</header>
+
+<main>
+<!-- ============ HERO ============ -->
+<section id="hero">
+  <svg class="waves" viewBox="0 0 1440 600" preserveAspectRatio="none" aria-hidden="true">
+    <g id="wave-g">
+      <path class="w w1" d=""/><path class="w w2" d=""/><path class="w w3" d=""/>
+    </g>
+  </svg>
+  <div class="hero-grid">
+    <p class="mono kicker rv">Observatorio · enfriamiento de centros de datos · México 2026</p>
+    <h1 class="display">
+      <span class="ln"><span>Enfriar la IA</span></span>
+      <span class="ln"><span>sin <em>beberse</em></span></span>
+      <span class="ln"><span>el agua.</span></span>
+    </h1>
+    <div class="hero-foot">
+      <p class="lede rv">Un modelo de atención pronostica 24&nbsp;horas por delante y decide, hora por hora, cuándo enfriar en seco y cuándo con agua.</p>
+      <div class="big rv">
+        <div class="big-n"><span id="h-pct">0</span><small>%</small></div>
+        <div class="big-l mono">menos agua<br>vs. enfriar siempre con agua<br><b id="h-l">0</b> litros · 7 ciudades · ene–sep 2026</div>
+      </div>
+    </div>
+    <div class="scroll mono rv">desliza <i></i></div>
+  </div>
+</section>
+
+<!-- ============ 01 MAPA ============ -->
+<section id="mapa" class="stage">
+  <div id="map"></div>
+  <div class="map-shade"></div>
+  <div class="sec-head">
+    <span class="idx mono">01 / MAPA</span>
+    <h2 class="display sm"><span class="ln"><span>Dónde el aire</span></span><span class="ln"><span>ya alcanza.</span></span></h2>
+    <p class="mono hint">clic en una ciudad →</p>
+  </div>
+  <aside id="panel" class="panel">
+    <div class="p-top mono"><span id="p-i">—</span><button id="p-x" aria-label="cerrar">×</button></div>
+    <h3 id="p-city" class="display xs">Elige una ciudad</h3>
+    <div class="p-grid">
+      <div><b id="p-pct">—</b><span class="mono">agua ahorrada</span></div>
+      <div><b id="p-l">—</b><span class="mono">litros ahorrados</span></div>
+      <div><b id="p-e">—</b><span class="mono">energía extra</span></div>
+      <div><b id="p-seco">—</b><span class="mono">horas con seco viable</span></div>
+    </div>
+    <div class="bar2"><span class="mono">modo seco viable</span><div><i id="b-seco"></i></div></div>
+    <div class="bar2"><span class="mono">modo evaporativo viable</span><div><i id="b-evap" class="aq"></i></div></div>
+    <p id="p-note" class="note"></p>
+    <button class="cta" id="p-go" data-go="dia">Ver un día de operación <i>→</i></button>
+  </aside>
+  <div class="legend mono"><span><i class="lg-hi"></i> más ahorro</span><span><i class="lg-lo"></i> menos</span><span>tamaño = litros</span></div>
+</section>
+
+<!-- ============ 02 DÍA ============ -->
+<section id="dia" class="wrap">
+  <div class="sec-head flow">
+    <span class="idx mono">02 / UN DÍA</span>
+    <h2 class="display sm"><span class="ln"><span>24 horas</span></span><span class="ln"><span>por delante.</span></span></h2>
+  </div>
+  <div class="pills" id="pills"></div>
+  <div class="day-kpis">
+    <div><b id="k-w">—</b><span class="mono">litros ese día con la IA</span></div>
+    <div><b id="k-s">—</b><span class="mono">litros ahorrados</span></div>
+    <div><b id="k-h">—</b><span class="mono">horas en modo seco</span></div>
+    <div><b id="k-d">—</b><span class="mono" id="k-dl">día</span></div>
+  </div>
+  <div class="chart-wrap" id="chart-wrap">
+    <svg id="chart" viewBox="0 0 1200 560" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id="tip" class="tip mono"></div>
+  </div>
+  <div class="scrub">
+    <span class="mono" id="s-a">—</span>
+    <input id="scrub" type="range" min="0" max="1" value="0" step="1" aria-label="día">
+    <span class="mono" id="s-b">—</span>
+  </div>
+  <p class="cap mono">arrastra el control para recorrer 2026 · banda = P10–P90 del modelo · verde = seco · azul = evaporativo</p>
+</section>
+
+<!-- ============ 03 CEREBRO ============ -->
+<section id="cerebro" class="wrap">
+  <div class="sec-head flow">
+    <span class="idx mono">03 / CEREBRO</span>
+    <h2 class="display sm"><span class="ln"><span>Qué mira</span></span><span class="ln"><span>el modelo.</span></span></h2>
+  </div>
+  <div class="two">
+    <div>
+      <canvas id="heat" width="480" height="240"></canvas>
+      <p class="cap mono" id="heat-cap">pasa el cursor: hora pasada → peso de atención</p>
+      <div class="axis mono"><span>−48 h</span><span>hora pasada</span><span>−1 h</span></div>
+    </div>
+    <div>
+      <p class="mono lab">error vs. «repetir lo de ayer» (100 % = persistencia, menor es mejor)</p>
+      <div id="mae"></div>
+      <p class="note" id="cov"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 ESCENARIOS ============ -->
+<section id="escenarios" class="wrap">
+  <div class="sec-head flow">
+    <span class="idx mono">04 / ESCENARIOS</span>
+    <h2 class="display sm"><span class="ln"><span>Y si hace</span></span><span class="ln"><span>más calor.</span></span></h2>
+  </div>
+  <div class="ctrl">
+    <div class="seg" id="seg">
+      <button data-v="0" class="on">clima 2026</button><button data-v="1.5">+1.5 °C</button><button data-v="3">+3 °C</button>
+    </div>
+    <label class="mono"><span style="text-transform:none;font-size:15px">λ</span> · litros que vale 1 kWh extra <b id="lam-o">1.0</b>
+      <input id="lam" type="range" min="0" max="8" step="0.5" value="1"></label>
+  </div>
+  <div class="two">
+    <div id="sc-bars" class="sc-bars"></div>
+    <div>
+      <div class="day-kpis tight">
+        <div><b id="t-w">—</b><span class="mono">agua ahorrada</span></div>
+        <div><b id="t-e">—</b><span class="mono">energía extra</span></div>
+        <div><b id="t-r">—</b><span class="mono">horas inseguras evitables</span></div>
+      </div>
+      <p class="mono lab">ahorro vs. seguridad, al variar el margen térmico</p>
+      <svg id="pareto" viewBox="0 0 560 300"></svg>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 LÍMITES ============ -->
+<section id="limites" class="wrap">
+  <div class="sec-head flow">
+    <span class="idx mono">05 / LÍMITES</span>
+    <h2 class="display sm"><span class="ln"><span>Lo que este</span></span><span class="ln"><span>no demuestra.</span></span></h2>
+  </div>
+  <ol class="lims">
+    <li><b>Lo operativo es simulado.</b> El modelo aprende un simulador calibrado con el kit CIFOX; el clima sí es real.</li>
+    <li><b>Contrafactuales.</b> Aquí sabemos qué habría pasado en el otro modo. En una instalación real no.</li>
+    <li><b>Humedad supuesta.</b> El kit no la trae; se calibró con 50 %.</li>
+    <li><b>Una torre híbrida, un límite de 27 °C.</b> En Mérida y Monterrey hace falta enfriamiento líquido.</li>
+    <li><b>Pronóstico con error sintético</b> sobre clima real, no un pronóstico meteorológico real.</li>
+    <li><b>Ventaja modesta frente a una regla simple:</b> menos horas inseguras al mismo ahorro, pero lejos del oráculo.</li>
+  </ol>
+  <footer class="mono">AguaSegura AI · Hackathon AguaSegura · datos simulados · <a href="/docs">API</a></footer>
+</section>
+</main>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
