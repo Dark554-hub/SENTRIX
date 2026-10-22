@@ -34,6 +34,7 @@
       <a href="#cerebro" data-go="cerebro"><i>03</i>Cerebro</a>
       <a href="#escenarios" data-go="escenarios"><i>04</i>Escenarios</a>
       <a href="#limites" data-go="limites"><i>05</i>Límites</a>
+      <a href="#costeo" data-go="costeo"><i>06</i>Costeo</a>
     </nav>
     <button type="button" id="pbtn" class="cta-cuenta">Parámetros</button>
   </div>
@@ -48,7 +49,6 @@
     <div><b id="d-net">—</b><span class="mono">beneficio neto MXN</span></div>
     <div><b id="d-pct">—</b><span class="mono">agua ahorrada</span></div>
   </div>
-  <div class="dcost" id="d-cost" aria-live="polite"></div>
   <label class="dfl"><span class="mono">Ciudad del sitio</span><select id="d-ciudad"></select></label>
   <label class="dfl"><span class="mono">Peso agua vs. energía · <b id="d-lam-o">1.0</b> L/kWh</span><input id="d-lam" type="range" min="0" max="8" step="0.5" value="1"></label>
   <label class="dfl"><span class="mono">Margen térmico · <b id="d-mar-o">0.0</b> °C</span><input id="d-margen" type="range" min="-2" max="6" step="0.5" value="0"></label>
@@ -216,6 +216,22 @@
     <li><div class="lim-content"><b>Ventaja modesta frente a una regla simple:</b> menos horas inseguras al mismo ahorro con mayor estabilidad térmica en la operación.</div></li>
   </ol>
   <footer class="mono">AguaSegura AI · Hackathon AguaSegura · datos simulados · <a href="/docs">API</a></footer>
+</section>
+
+<!-- ============ 06 COSTEO ============ -->
+<section id="costeo" class="wrap">
+  <div class="sec-head flow">
+    <span class="idx mono">06 / COSTEO</span>
+    <h2 class="display sm">Lo que cuesta<br>y lo que ahorras.</h2>
+  </div>
+  <div class="day-kpis" id="cs-kpis"></div>
+  <div class="two">
+    <div id="cs-table"></div>
+    <div>
+      <p class="note" id="cs-note"></p>
+      <p class="note">Comparado con enfriar siempre con agua durante 2026. Los precios y el valor por escasez salen de tus parámetros: cámbialos en el botón <b>Parámetros</b> y esta sección se recalcula. Datos simulados.</p>
+    </div>
+  </div>
 </section>
 </main>
 

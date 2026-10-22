@@ -317,8 +317,13 @@ function initDrawer(me, cfg) {
   async function kpis() {
     try { const r = (await get('/report')).resultado, n = $('#d-net'); n.textContent = mxn(r.beneficio_neto_mxn); n.className = r.beneficio_neto_mxn < 0 ? 'neg' : ''; $('#d-pct').textContent = r.agua_ahorrada_pct + ' %';
       const L = [['Agua ahorrada', nf(r.agua_ahorrada_l) + ' L'], ['Valor del agua ahorrada', mxn(r.ahorro_agua_mxn)], ['Energía extra', nf(r.energia_extra_kwh) + ' kWh'],
-        ['Costo de la energía extra', '−' + mxn(r.costo_energia_extra_mxn).replace('$', '$')], ['Beneficio neto 2026', mxn(r.beneficio_neto_mxn)]];
-      $('#d-cost').innerHTML = '<div class="mono dc-h">Costeo · ' + r.ciudad + ' · 2026</div>' + L.map((x, i) => `<div class="dc-r${i === 4 ? ' tot' + (r.beneficio_neto_mxn < 0 ? ' neg' : '') : ''}"><span>${x[0]}</span><b>${x[1]}</b></div>`).join(''); } catch (e) { /* sin datos */ }
+        ['Costo de la energía extra', mxn(-r.costo_energia_extra_mxn)], ['Beneficio neto 2026', mxn(r.beneficio_neto_mxn)]];
+      $('#cs-kpis').innerHTML = [[nf(r.agua_ahorrada_l) + ' L', 'agua ahorrada · ' + r.agua_ahorrada_pct + ' %', 0], [mxn(r.ahorro_agua_mxn), 'valor del agua', 0],
+        [mxn(-r.costo_energia_extra_mxn), 'energía extra', 0], [mxn(r.beneficio_neto_mxn), 'beneficio neto', r.beneficio_neto_mxn < 0]]
+        .map(x => `<div><b${x[2] ? ' style="color:var(--warn)"' : ''}>${x[0]}</b><span class="mono">${x[1]}</span></div>`).join('');
+      $('#cs-table').innerHTML = '<p class="mono lab">costeo · ' + r.ciudad + ' · 2026</p>' + L.map((x, i) => `<div class="dc-r${i === 4 ? ' tot' + (r.beneficio_neto_mxn < 0 ? ' neg' : '') : ''}"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');
+      $('#cs-note').textContent = r.beneficio_neto_mxn < 0 ? 'Con estos precios, la energía extra cuesta más de lo que vale el agua ahorrada. Sube el valor por escasez del agua (riesgo hídrico, ESG) o usa la configuración óptima.'
+        : 'Con estos precios, ahorrar agua se paga solo: el valor del agua supera el costo de la energía extra.'; } catch (e) { /* sin datos */ }
   }
   async function apply(prevCity) {
     const c = read(); S.cfg = c; S.lam = c.lam; S.margin = c.margen_c; $('#lam').value = S.lam; $('#lam-o').textContent = S.lam.toFixed(1);
