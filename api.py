@@ -46,7 +46,9 @@ async def security_headers(request, call_next):
     if request.url.path.startswith('/cuenta') or request.url.path.startswith(('/auth', '/me', '/settings', '/report')):
         resp.headers['Cache-Control'] = 'no-store'
     if request.url.path.startswith('/cuenta'):
-        resp.headers['Content-Security-Policy'] = "default-src 'self'; style-src 'unsafe-inline'; frame-ancestors 'none'"
+        resp.headers['Content-Security-Policy'] = ("default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; "
+                                                     "font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://*.cartocdn.com; "
+                                                     "connect-src 'self' https://*.cartocdn.com https://basemaps.cartocdn.com; worker-src blob:; child-src blob:; frame-ancestors 'none'")
     return resp
 
 

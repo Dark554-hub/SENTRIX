@@ -1,59 +1,137 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SENTRIX — mi cuenta</title>
-<style>
-:root{--bg:#f6f8fa;--fg:#14202b;--card:#fff;--ac:#0b7a75;--mut:#5b6b78;--bd:#d8e0e6}
-@media(prefers-color-scheme:dark){:root{--bg:#0e1519;--fg:#e6eef3;--card:#162129;--ac:#3cc4bb;--mut:#93a4b0;--bd:#26343e}}
-*{box-sizing:border-box}body{margin:0;font:15px system-ui,sans-serif;background:var(--bg);color:var(--fg)}
-main{max-width:900px;margin:0 auto;padding:24px 16px}h1{margin:0 0 4px}a{color:var(--ac)}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px;margin:16px 0}
-label{display:block;margin:10px 0 4px;color:var(--mut);font-size:13px}
-input,select{width:100%;padding:9px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--fg);font:inherit}
-button{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer;margin-top:12px}
-button.sec{background:transparent;color:var(--ac);border:1px solid var(--ac)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.kpi b{display:block;font-size:24px}.kpi span{color:var(--mut);font-size:13px}
-.plan.cur{border-color:var(--ac);border-width:2px}.err{color:#c0392b;min-height:1.2em}.hide{display:none}
-table{width:100%;border-collapse:collapse}td,th{text-align:right;padding:6px;border-bottom:1px solid var(--bd)}td:first-child,th:first-child{text-align:left}
-</style></head><body><main>
-<h1>SENTRIX</h1><p style="color:var(--mut)">Cuenta, parámetros y ahorro de tu sitio · <a href="/">ver observatorio</a></p>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 fill=%27%2306080a%27/%3E%3Cpath d=%27M16 5c5 6 8 10 8 14a8 8 0 0 1-16 0c0-4 3-8 8-14z%27 fill=%27%232ede7f%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="cuenta.css">
+</head>
+<body class="acct">
 
-<section id="auth" class="card">
-  <h3>Entrar o crear cuenta</h3>
-  <div class="grid"><div><label>Correo</label><input id="email" type="email"></div>
-  <div><label>Contraseña (mín. 8)</label><input id="pw" type="password"></div>
-  <div><label>Empresa (solo al registrarte)</label><input id="empresa"></div></div>
-  <button data-act="auth('login')">Entrar</button> <button class="sec" data-act="auth('register')">Crear cuenta</button>
-  <div class="err" id="aerr"></div>
+<header id="nav">
+  <a href="/" class="logo">agua<em>segura</em><span class="mono">/ai</span></a>
+  <nav>
+    <a href="/">Observatorio</a>
+    <a href="#parametros" class="priv hide"><i>01</i>Parámetros</a>
+    <a href="#ahorro" class="priv hide"><i>02</i>Ahorro</a>
+    <a href="#portafolio" class="priv hide"><i>03</i>Portafolio</a>
+    <a href="#planes" class="priv hide"><i>04</i>Planes</a>
+  </nav>
+  <div class="sim mono"><span class="dot"></span>datos simulados · clima real</div>
+</header>
+
+<main>
+<!-- ============ ACCESO / MAPA ============ -->
+<section id="acceso" class="stage">
+  <div id="map"></div>
+  <div class="map-shade"></div>
+  <div class="sec-head">
+    <span class="idx mono" id="a-idx">SENTRIX / ACCESO</span>
+    <h1 class="display sm"><span id="a-t1">Tu sitio.</span><br><span id="a-t2">Tu ahorro.</span></h1>
+  </div>
+
+  <aside class="panel open" id="panel">
+    <!-- vista: sin sesión -->
+    <div id="v-out" class="pv">
+      <div class="p-top mono"><span>Acceso</span></div>
+      <h3 class="display xs" id="f-title">Entra a tu cuenta</h3>
+      <form id="f-auth" autocomplete="on" novalidate>
+        <label class="fl"><span class="mono">Correo</span><input id="email" type="email" autocomplete="username" required></label>
+        <label class="fl"><span class="mono">Contraseña · mín. 8</span><input id="pw" type="password" autocomplete="current-password" required></label>
+        <label class="fl reg hide"><span class="mono">Empresa</span><input id="empresa" type="text" autocomplete="organization"></label>
+        <p class="err" id="aerr" role="alert"></p>
+        <button class="cta" type="submit" id="f-go">Entrar <i>→</i></button>
+      </form>
+      <button class="lnk mono" id="f-toggle" type="button">¿No tienes cuenta? Crear una</button>
+      <p class="note">Tus parámetros y resultados quedan guardados en tu cuenta. Datos simulados con clima real.</p>
+    </div>
+
+    <!-- vista: con sesión -->
+    <div id="v-in" class="pv hide">
+      <div class="p-top mono"><span id="who">—</span><button id="logout" type="button" class="lnk mono">salir</button></div>
+      <h3 class="display xs" id="p-city">—</h3>
+      <div class="p-grid">
+        <div><b id="q-pct">—</b><span class="mono">agua ahorrada</span></div>
+        <div><b id="q-l">—</b><span class="mono">litros ahorrados</span></div>
+        <div><b id="q-net">—</b><span class="mono">beneficio neto MXN</span></div>
+        <div><b id="q-plan">—</b><span class="mono">plan</span></div>
+      </div>
+      <p class="note" id="q-note"></p>
+      <a class="cta" href="#parametros">Ajustar parámetros <i>↓</i></a>
+    </div>
+  </aside>
+  <div class="legend mono"><span><i class="lg-hi"></i> tu sitio</span><span><i class="lg-lo"></i> otras ciudades</span></div>
 </section>
 
+<!-- ============ APP (solo con sesión) ============ -->
 <div id="app" class="hide">
-  <p><b id="who"></b> · plan <b id="plan"></b> <button class="sec" data-act="logout()">Salir</button></p>
 
-  <section class="card"><h3>Parámetros de mi sitio</h3>
-    <div class="grid">
-      <div><label>Ciudad del sitio</label><select id="ciudad"></select></div>
-      <div><label>Peso agua vs. energía (L por kWh)</label><input id="lam" type="number" step="0.1"></div>
-      <div><label>Margen de seguridad térmica (°C)</label><input id="margen_c" type="number" step="0.5"></div>
-      <div><label>Precio del agua (MXN/m³)</label><input id="precio_agua_mxn_m3" type="number" step="1"></div>
-      <div><label>Precio de la energía (MXN/kWh)</label><input id="precio_kwh_mxn" type="number" step="0.1"></div>
-      <div><label>Valor por escasez del agua (MXN/m³, riesgo/ESG)</label><input id="precio_escasez_mxn_m3" type="number" step="10"></div>
+<section id="parametros" class="wrap">
+  <div class="sec-head flow">
+    <span class="idx mono">01 / PARÁMETROS</span>
+    <h2 class="display sm">Configura<br>tu operación.</h2>
+  </div>
+  <div class="two">
+    <div class="fields">
+      <label class="fl"><span class="mono">Ciudad del sitio</span><select id="ciudad"></select></label>
+      <label class="fl"><span class="mono">Peso agua vs. energía · L por kWh</span><input id="lam" type="number" step="0.1" min="0" max="20"></label>
+      <label class="fl"><span class="mono">Margen de seguridad térmica · °C</span><input id="margen_c" type="number" step="0.5" min="-2" max="6"></label>
+      <label class="fl"><span class="mono">Precio del agua · MXN/m³</span><input id="precio_agua_mxn_m3" type="number" step="1" min="0"></label>
+      <label class="fl"><span class="mono">Precio de la energía · MXN/kWh</span><input id="precio_kwh_mxn" type="number" step="0.1" min="0"></label>
+      <label class="fl"><span class="mono">Valor por escasez del agua · MXN/m³</span><input id="precio_escasez_mxn_m3" type="number" step="10" min="0"></label>
     </div>
-    <button data-act="save()">Guardar y recalcular</button><div class="err" id="serr"></div>
-  </section>
+    <div>
+      <p class="lab mono">cómo se calcula</p>
+      <p class="note">El modelo pronostica 24&nbsp;h y decide cada hora entre enfriar en seco o con agua. El <b>peso agua/energía</b> dice cuántos litros vale 1&nbsp;kWh extra; el <b>margen</b> te deja más holgura térmica; el <b>valor por escasez</b> suma riesgo hídrico, ESG y multas al agua que ahorras.</p>
+      <p class="err" id="serr" role="alert"></p>
+      <button class="cta" id="save" type="button">Guardar y recalcular <i>→</i></button>
+    </div>
+  </div>
+</section>
 
-  <section class="card"><h3>Ahorro vs. enfriamiento evaporativo actual (2026)</h3>
-    <div class="grid" id="kpis"></div>
-    <button class="sec" data-act="optimize()">Encontrar la configuración óptima para mi sitio</button>
-    <div id="opt"></div>
-    <p style="color:var(--mut);font-size:13px">Datos simulados: clima real, operación simulada. Se reemplaza con tu telemetría en el plan Enterprise.</p>
-  </section>
+<section id="ahorro" class="wrap">
+  <div class="sec-head flow">
+    <span class="idx mono">02 / AHORRO</span>
+    <h2 class="display sm">Lo que ahorras<br>vs. hoy.</h2>
+  </div>
+  <div class="day-kpis" id="kpis"></div>
+  <div class="two">
+    <div>
+      <button class="cta" id="opt-btn" type="button">Encontrar la configuración óptima <i>→</i></button>
+      <div id="opt" class="opt"></div>
+    </div>
+    <p class="note">Comparado con enfriar siempre con agua, durante 2026. Si ahorrar agua no se paga solo con tus precios, el optimizador te lo dice y te recomienda mantener el evaporativo. Datos simulados: se sustituyen por tu telemetría en el plan Enterprise.</p>
+  </div>
+</section>
 
-  <section class="card"><h3>Portafolio (plan Pro)</h3>
-    <div id="port"><button class="sec" data-act="portfolio()">Ver comparativo de 7 ciudades</button></div>
-  </section>
+<section id="portafolio" class="wrap">
+  <div class="sec-head flow">
+    <span class="idx mono">03 / PORTAFOLIO</span>
+    <h2 class="display sm">Las siete<br>ciudades.</h2>
+  </div>
+  <div id="port"><button class="cta" id="port-btn" type="button">Ver comparativo <i>→</i></button></div>
+</section>
 
-  <section class="card"><h3>Planes</h3><div class="grid" id="plans"></div><div class="err" id="perr"></div></section>
+<section id="planes" class="wrap">
+  <div class="sec-head flow">
+    <span class="idx mono">04 / PLANES</span>
+    <h2 class="display sm">Crece<br>a tu ritmo.</h2>
+  </div>
+  <div class="plans" id="plans"></div>
+  <p class="err" id="perr" role="alert"></p>
+  <footer class="mono">SENTRIX · datos simulados · <a href="/docs">API</a> · <a href="/">observatorio</a></footer>
+</section>
+
 </div>
+</main>
 
-<script src="cuenta.js"></script></main></body></html>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="cuenta.js"></script>
+</body>
+</html>
